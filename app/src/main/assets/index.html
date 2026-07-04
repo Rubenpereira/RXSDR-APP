@@ -1542,7 +1542,7 @@ function applyLayoutMode(mode){
   
   var cLay = $("cLayout");
   if (cLay) cLay.value = mode;
-  
+  smNeedleEl = null;
   sizeCanvases();
   setTimeout(sizeCanvases, 20);
   setTimeout(sizeCanvases, 100);
