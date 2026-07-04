@@ -166,15 +166,37 @@ class MainActivity : Activity() {
 
     private fun applyGain() {
         val c = client ?: return
-        if (hwAgc) {
-            // So o auto-ganho do tuner. O AGC digital do RTL2832 (cmd 0x08)
-            // amplifica demais o ruido e "avermelha" a cachoeira inteira.
-            c.setAgc(false)
-            c.setGainMode(false)
+        if (directSamplingActive) {
+            // ===== DIRECT SAMPLING (HF): tuner R820T bypassed =====
+            // CMD_GAIN_MODE e CMD_GAIN nao tem efeito — o sinal vai
+            // direto da antena ao ADC do RTL2832U.
+            if (hwAgc) {
+                // AGC digital do RTL2832U — unico controle de ganho HW
+                // disponivel em direct sampling.
+                c.setAgc(true)
+                // Atenua por software (-15 dB) para compensar a sobre-amplificacao do AGC
+                // de hardware, evitando estourar a cachoeira em vermelho.
+                engine.softGainDb = -15f
+            } else {
+                // Ganho manual: mapeado para atenuacao por software (0.0 a 49.6 dB no slider
+                // torna-se -49.6 dB a 0.0 dB de ganho real) para evitar saturacao digital.
+                c.setAgc(false)
+                engine.softGainDb = (gainTenths / 10f) - 49.6f
+            }
         } else {
+            // ===== MODO NORMAL: tuner R820T no caminho do sinal =====
+            // AGC digital do RTL2832 fica sempre desligado (amplifica
+            // ruido de forma excessiva e "avermelha" a cachoeira).
             c.setAgc(false)
-            c.setGainMode(true)
-            c.setGainTenths(gainTenths)
+            engine.softGainDb = 0f
+            if (hwAgc) {
+                // Auto-ganho do tuner: setGainMode(false) = automatico.
+                c.setGainMode(false)
+            } else {
+                // Ganho manual do tuner: valor especifico em decimos de dB.
+                c.setGainMode(true)
+                c.setGainTenths(gainTenths)
+            }
         }
     }
 
@@ -187,6 +209,8 @@ class MainActivity : Activity() {
         if (need != directSamplingActive) {
             directSamplingActive = need
             client?.setDirectSampling(if (need) 2 else 0)
+            // Mecanismo de ganho muda entre DS (software) e normal (tuner):
+            applyGain()
         }
     }
 

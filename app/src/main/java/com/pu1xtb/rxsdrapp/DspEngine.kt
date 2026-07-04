@@ -43,6 +43,7 @@ class DspEngine(private val ui: Ui) {
     @Volatile var smeterDbm: Float = -130f
     @Volatile var squelchOpen: Boolean = true
     @Volatile var nrLevel: Float = 0f
+    @Volatile var softGainDb: Float = 0f   // ganho por software (usado em Direct Sampling)
 
     val audio = AudioSink(AUDIO_RATE)
     private val nr = NoiseReducer()
@@ -211,6 +212,18 @@ class DspEngine(private val ui: Ui) {
             iBuf[k] = iv; qBuf[k] = qv
         }
         dcI = di; dcQ = dq
+
+        // ----- ganho por software (Direct Sampling: tuner bypassed) -----
+        // Aplicado ANTES da FFT para afetar espectro/cachoeira e demodulacao,
+        // mas como atenuacao (valores <= 0 dB) para evitar saturacao digital.
+        val sgDb = softGainDb
+        if (sgDb != 0f) {
+            val gain = Math.pow(10.0, sgDb.coerceIn(-60f, 0f).toDouble() / 20.0).toFloat()
+            for (k in 0 until n) {
+                iBuf[k] *= gain
+                qBuf[k] *= gain
+            }
+        }
 
         // ----- espectro -----
         val now = System.currentTimeMillis()
