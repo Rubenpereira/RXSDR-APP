@@ -1283,6 +1283,27 @@ pan.addEventListener("touchmove", function(ev){
 }, {passive:false});
 pan.addEventListener("touchend", function(){ panTouch.active = false; saveCfg(); });
 
+// Mouse events para o espectro (arrastar sintoniza)
+pan.addEventListener("mousedown", function(ev){
+  panTouch.active = true;
+  panTouch.x0 = ev.clientX;
+  panTouch.f0 = S.vfo;
+});
+window.addEventListener("mousemove", function(ev){
+  if (!panTouch.active) return;
+  var v = viewWindow();
+  var dx = ev.clientX - panTouch.x0;
+  var hzPerPx = v.span / pan.clientWidth;
+  var f = panTouch.f0 + dx * hzPerPx;
+  setVfo(Math.round(f / S.step) * S.step);
+});
+window.addEventListener("mouseup", function(){
+  if (panTouch.active) {
+    panTouch.active = false;
+    saveCfg();
+  }
+});
+
 var wfTouch = {active:false, x0:0, f0:0, moved:false};
 wf.addEventListener("touchstart", function(ev){
   ev.preventDefault();
@@ -1299,7 +1320,6 @@ wf.addEventListener("touchmove", function(ev){
   if (Math.abs(dx) > 5) wfTouch.moved = true;
   var v = viewWindow();
   var hzPerPx = v.span / wf.clientWidth;
-  // Dedo para a direita -> VFO para a direita (mesmo sentido do espectro)
   var f = wfTouch.f0 + dx * hzPerPx;
   setVfo(Math.round(f / S.step) * S.step);
 }, {passive:false});
@@ -1307,7 +1327,6 @@ wf.addEventListener("touchmove", function(ev){
 wf.addEventListener("touchend", function(ev){
   if (!wfTouch.active) return;
   if (!wfTouch.moved){
-    // Foi apenas um clique, muda para a freq exata do toque
     var v = viewWindow();
     var rect = wf.getBoundingClientRect();
     var x = wfTouch.x0 - rect.left;
@@ -1316,6 +1335,34 @@ wf.addEventListener("touchend", function(ev){
   }
   wfTouch.active = false;
 }, {passive:false});
+
+// Mouse events para a cachoeira (arrastar corre frequência, clique sintoniza)
+wf.addEventListener("mousedown", function(ev){
+  wfTouch.active = true;
+  wfTouch.moved = false;
+  wfTouch.x0 = ev.clientX;
+  wfTouch.f0 = S.vfo;
+});
+window.addEventListener("mousemove", function(ev){
+  if (!wfTouch.active) return;
+  var dx = ev.clientX - wfTouch.x0;
+  if (Math.abs(dx) > 5) wfTouch.moved = true;
+  var v = viewWindow();
+  var hzPerPx = v.span / wf.clientWidth;
+  var f = wfTouch.f0 + dx * hzPerPx;
+  setVfo(Math.round(f / S.step) * S.step);
+});
+window.addEventListener("mouseup", function(ev){
+  if (!wfTouch.active) return;
+  if (!wfTouch.moved){
+    var v = viewWindow();
+    var rect = wf.getBoundingClientRect();
+    var x = ev.clientX - rect.left;
+    var f = v.lo + v.span * (x / rect.width);
+    setVfo(Math.round(f / S.step) * S.step);
+  }
+  wfTouch.active = false;
+});
 
 // ===================== BOTOES DO PANADAPTER =====================
 var ZOOMS = [1,2,4,8,16];
