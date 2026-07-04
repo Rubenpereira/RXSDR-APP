@@ -35,15 +35,6 @@ cachoeira, demodulacao e audio.
 
 Leia o [MANUAL_DE_OPERACAO.txt](MANUAL_DE_OPERACAO.txt) ou toque no botao **MANUAL** dentro do app.
 
-## Compilacao (desenvolvedores)
-
-Projeto Android padrao (Kotlin + WebView, sem dependencias externas).
-
-1. Abra a pasta no **Android Studio** uma vez (baixa SDK/Gradle automaticamente).
-2. `GERAR_KEYSTORE.bat` — cria a chave de assinatura (uma unica vez).
-3. `COMPILAR_APK.bat` — gera o `RXSDR-APP.apk`.
-4. `GERAR_AAB.bat` — gera o `.aab` para a Play Store.
-
 ## Licenca
 
 [GPL-3.0](LICENSE) — Copyright (C) Ruben Pereira (PU1XTB)
