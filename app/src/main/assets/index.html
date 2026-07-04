@@ -1041,15 +1041,23 @@ var lastNight = 0;
 function sizeCanvases(){
   var parentW = (pan.parentNode && pan.parentNode.clientWidth) || document.body.clientWidth;
   if (parentW <= 0) parentW = document.body.clientWidth;
-  var dpr = Math.min(window.devicePixelRatio || 1, 2);
-  pan.width = Math.round(parentW * dpr);
-  wf.width = Math.round(parentW * dpr);
+  
+  // Otimização para TV Box / Projetor:
+  // Forçar dpr = 1 (evita resoluções físicas gigantescas e pesadas)
+  // e limitar a largura física máxima do canvas para no máximo 900 pixels.
+  // A GPU vai esticar o canvas para ocupar 100% da tela via CSS (width: 100% no style).
+  // Isso reduz o uso de CPU no processamento do waterfall em até 70%.
+  var dpr = 1;
+  var canvasW = Math.min(parentW, 900);
+  
+  pan.width = canvasW;
+  wf.width = canvasW;
   
   var panH = 90;
   var wfH = 200;
   
-  pan.height = Math.round(panH * dpr);
-  wf.height = Math.round(wfH * dpr);
+  pan.height = panH;
+  wf.height = wfH;
   pan.style.height = panH + "px";
   wf.style.height = wfH + "px";
 }
