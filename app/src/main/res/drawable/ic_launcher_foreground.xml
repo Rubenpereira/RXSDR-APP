@@ -1,0 +1,21 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Antena -->
+    <path android:fillColor="#2ecc71"
+        android:pathData="M52,34 L56,34 L58,78 L50,78 Z"/>
+    <path android:fillColor="#2ecc71"
+        android:pathData="M54,28 m-5,0 a5,5 0 1,1 10,0 a5,5 0 1,1 -10,0"/>
+    <!-- Ondas de radio -->
+    <path android:strokeColor="#3aa0ff" android:strokeWidth="3" android:fillColor="#00000000"
+        android:pathData="M38,28 A16,16 0 0,1 54,12"/>
+    <path android:strokeColor="#3aa0ff" android:strokeWidth="3" android:fillColor="#00000000"
+        android:pathData="M30,28 A24,24 0 0,1 54,4"/>
+    <path android:strokeColor="#3aa0ff" android:strokeWidth="3" android:fillColor="#00000000"
+        android:pathData="M70,28 A16,16 0 0,0 54,12"/>
+    <path android:strokeColor="#3aa0ff" android:strokeWidth="3" android:fillColor="#00000000"
+        android:pathData="M78,28 A24,24 0 0,0 54,4"/>
+    <!-- Espectro -->
+    <path android:fillColor="#3aa0ff"
+        android:pathData="M28,84 L32,84 L32,76 L28,76 Z M36,84 L40,84 L40,70 L36,70 Z M44,84 L48,84 L48,74 L44,74 Z M60,84 L64,84 L64,72 L60,72 Z M68,84 L72,84 L72,78 L68,78 Z M76,84 L80,84 L80,74 L76,74 Z"/>
+</vector>

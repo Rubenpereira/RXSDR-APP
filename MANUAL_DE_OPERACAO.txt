@@ -1,0 +1,156 @@
+==============================================================
+        RXSDR-APP - MANUAL DE OPERACAO
+        Receptor SDR para Android (RX)
+==============================================================
+
+1. O QUE E O RXSDR-APP
+----------------------
+Receptor de radio por SDR (Software Defined Radio) que roda
+inteiramente no celular. Ele recebe as amostras de RF de um
+dongle RTL-SDR e faz todo o processamento no aparelho:
+espectro, cachoeira, demodulacao e audio.
+
+Modos de recepcao: AM, USB, LSB, CW, NFM e WFM (radio FM).
+Cobertura tipica do dongle: 24 MHz a 1,7 GHz, e abaixo de
+24 MHz (HF) por amostragem direta automatica (dongles v3 ou
+modificados).
+
+2. FONTES DE SINAL (USB / TCP)
+------------------------------
+- USB: dongle RTL-SDR ligado direto no celular por cabo OTG.
+  Requer o app gratuito "RTL-SDR driver" (o RXSDR-APP oferece
+  instalar na primeira vez). Escolha USB e aperte o botao
+  redondo de ligar.
+- TCP: dongle em outro equipamento da rede (PC, Raspberry,
+  TV Box) rodando rtl_tcp. Escolha TCP, digite IP:porta
+  (ex.: 192.168.3.10:1234) e aperte o botao de ligar.
+
+3. BOTAO LIGA/DESLIGA
+---------------------
+Botao redondo grande a esquerda do VFO:
+- OFF (vermelho): desligado. Toque para conectar.
+- ... : conectando.
+- ON (verde): recebendo. Toque para desconectar.
+
+4. VFO A / VFO B
+----------------
+O visor grande mostra a frequencia do VFO em uso - o nome
+aceso em verde (VFO A ou VFO B) indica qual esta ativo.
+- Digitos: a frequencia e editada tocando em cima dos
+  proprios numeros do VFO - metade de CIMA do digito soma,
+  metade de BAIXO subtrai (com vai-um automatico).
+- "MHz": toque para digitar a frequencia completa pelo
+  teclado numerico.
+- A>B: copia o VFO ativo para o outro VFO.
+- SWAP: troca A pelo B (frequencia e modo) e alterna qual
+  esta ativo.
+
+5. MODOS, BW E STEP
+-------------------
+- AM / USB / LSB / CW / NFM / WFM: selecionam o modo. Ao
+  escolher, a largura (BW) e o passo (STEP) mudam para o
+  padrao do modo (ex.: LSB/USB -> STEP 1k, WFM -> 200k).
+- BW: abre a lista de larguras de filtro do modo atual.
+- STEP: abre a lista de passos de sintonia (10 Hz a 1 MHz).
+
+6. S-METER (MEDIDOR DE SINAL)
+-----------------------------
+- Ponteiro analogico estilo Yaesu: S0 a S9 na escala preta,
+  +10 a +60 dB na vermelha. Sobe rapido e desce devagar,
+  como um instrumento mecanico.
+- Barra de LEDs: mesma leitura em formato digital.
+- Leitura numerica: dBm e valor S (ex.: -90.1 dBm S6).
+- A calibracao fica na CONFIGURACAO (engrenagem).
+Obs.: em HF o proprio ruido da banda ja marca S5-S7; o
+ponteiro so cai ao zero quando desconectado.
+
+7. PAINEL REDE / SDR
+--------------------
+- RX: velocidade de dados recebidos (aprox. 2 MB/s a 1.024M).
+- TOTAL: dados acumulados na sessao.
+- TUNER: chip do dongle (R820T etc.). "(DS)" indica
+  amostragem direta ativa (HF).
+- AMOSTRAGEM: taxa do SDR.
+- SQL: estado do squelch (ABERTO/FECHADO).
+- NIVEL DE AUDIO: barra do audio demodulado.
+
+8. SINTONIA
+-----------
+- Setas < e > : um passo por toque. SEGURE para correr a
+  frequencia continuamente (acelera apos 2 segundos).
+- Barra deslizante: sintonia rapida em torno da frequencia
+  atual (+-50 passos). Ao soltar, volta ao centro.
+- Espectro/cachoeira: ARRASTE para os lados para sintonizar
+  (a linha acompanha o dedo). TOQUE na cachoeira para pular
+  direto para a frequencia tocada. PINCA no espectro = zoom.
+
+9. ESPECTRO E CACHOEIRA
+-----------------------
+Linha tracejada vermelha = frequencia sintonizada. A faixa
+sombreada mostra a largura do filtro (BW). Escala de dBm a
+esquerda e de frequencia no topo.
+
+Botoes (moldura laranja):
+- ZOOM: aproximacao do espectro (x1 a x16).
+- FAIXA: alcance vertical em dB (60 a 110 dB).
+- WF: velocidade da cachoeira (LENTA/NORMAL/RAPIDA/TURBO).
+- MEDIA: suaviza o espectro (media entre quadros).
+- TELA ATIVA: pressionado (verde) = a tela nunca apaga.
+  Solto = a tela apaga no tempo normal do Android e o RADIO
+  CONTINUA TOCANDO em segundo plano (aparece uma notificacao
+  "RXSDR-APP - Recebendo").
+- MANUAL: abre este manual. Para aumentar a letra, use os
+  botoes A- / A+ ou faca o gesto de PINCA com dois dedos.
+
+10. CONTROLES DESLIZANTES
+-------------------------
+- VOLUME: ate 300%. Acima de 100% ha reforco com limitador
+  suave (sem distorcao aspera).
+- NR RUIDO: redutor de ruido para HF (subtracao espectral).
+  0 = desligado. 40-60% e um bom ponto para SSB. Ele "ouve"
+  o ruido por ~2 segundos apos ligar para aprender o piso.
+  Nao atua em WFM.
+- GANHO RF: ganho do tuner (0 a 49.6 dB). O app envia sempre
+  o valor valido mais proximo da tabela do chip. Dica: 25-35
+  dB para sinais fortes; mais alto em antenas modestas.
+  AGC: ganho automatico do tuner (moderado). Ao tocar no
+  slider, o AGC desliga e vale o valor manual.
+- PISO WF: nivel minimo de cor da cachoeira (contraste).
+  123 e um bom ponto de partida.
+- SQUELCH: silencia o audio abaixo do nivel escolhido (dBm).
+  Todo a esquerda = OFF (sempre aberto).
+
+11. CONFIGURACAO (ENGRENAGEM)
+-----------------------------
+- Amostragem SDR: 1.024 ou 2.048 MSPS (espectro mais largo,
+  mais CPU e mais rede).
+- Correcao PPM: desvio do cristal do dongle.
+- Calibracao S-meter: desloca a leitura em dB para casar com
+  um sinal de referencia conhecido.
+- FFT quadros/s: fluidez do espectro (10/15/20).
+- Driver USB: instala o "RTL-SDR driver" da Play Store.
+Frequencias abaixo de 24 MHz ativam automaticamente a
+amostragem direta (ramo Q) - requer dongle v3 ou modificado.
+
+12. AUDIO EM SEGUNDO PLANO
+--------------------------
+Com o radio ligado, o app mantem um servico ativo que segura
+o Wi-Fi e a CPU: pode apagar a tela ou trocar de app que o
+audio continua. Para encerrar de vez, aperte OFF ou saia do
+app (botao voltar > SAIR).
+Se o audio parar com a tela apagada em celulares com economia
+de bateria agressiva (Xiaomi, Samsung...), libere o RXSDR-APP
+na otimizacao de bateria do aparelho.
+
+13. DICAS RAPIDAS
+-----------------
+- Cachoeira toda vermelha? Reduza o GANHO RF ou suba o PISO WF.
+- Nada se ouve? Veja o SQL (squelch pode estar fechado) e o
+  VOLUME; confira se ha sinal na cachoeira.
+- HF fraco? Verifique antena e aumente o GANHO RF; ligue o NR.
+- Ponteiro parado no meio? E o ruido da banda (normal em HF).
+- rtl_tcp no PC/TV Box: rtl_tcp -a 0.0.0.0 -p 1234 -s 1024000
+
+==============================================================
+     Desenvolvido por PU1XTB Ruben - ARARUAMA RJ
+==============================================================

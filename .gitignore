@@ -1,0 +1,26 @@
+# Android
+.gradle/
+build/
+app/build/
+local.properties
+.idea/
+*.iml
+.kotlin/
+
+# NUNCA subir a assinatura para o GitHub!
+*.keystore
+keystore.properties
+
+# Saidas (o APK de release VAI para o GitHub; o .aab nao)
+RXSDR-APP.aab
+
+# diagnostico local (contem senha do box)
+DIAGNOSTICO_RTLTCP.bat
+diagnostico_rtltcp.txt
+TESTE_RTLTCP.ps1
+TESTE_RTLTCP.bat
+teste_rtltcp.txt
+
+# imagens de referencia (nao distribuir)
+exemplo1.jpg
+exemplo2.jpg

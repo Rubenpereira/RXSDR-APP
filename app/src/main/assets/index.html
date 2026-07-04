@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>RXSDR-APP</title>
+<style>
+:root{
+  --bg:#0b0f14; --panel:#121a24; --panel2:#0e1620; --line:#22303f;
+  --txt:#c7d3de; --dim:#6b7c8c; --acc:#3aa0ff; --grn:#2ecc71; --red:#e74c3c;
+  --yel:#f1c40f; --freq:#4db2ff;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{background:var(--bg);color:var(--txt);font-family:'Roboto Mono','Courier New',monospace;height:100%;overflow-x:hidden}
+body{display:flex;flex-direction:column;min-height:100%;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.hdr{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--panel2);border-bottom:1px solid var(--line)}
+.dot{width:10px;height:10px;border-radius:50%;background:#555;flex:none}
+.dot.on{background:var(--grn);box-shadow:0 0 8px var(--grn)}
+.hdr .title{font-size:13px;font-weight:bold;white-space:nowrap}
+.hdr .utc{margin-left:auto;font-size:13px;color:var(--yel);white-space:nowrap}
+.row2{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--panel2);border-bottom:1px solid var(--line)}
+.badge{font-size:11px;padding:3px 10px;border:1px solid var(--grn);border-radius:12px;color:var(--grn)}
+.src{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.src button{background:none;border:none;color:var(--dim);font-family:inherit;font-size:12px;padding:6px 12px}
+.src button.sel{background:var(--acc);color:#001;font-weight:bold}
+#addr{flex:1;min-width:60px;background:#0a1119;border:1px solid var(--line);border-radius:8px;color:var(--txt);font-family:inherit;font-size:13px;padding:6px 8px;user-select:text;-webkit-user-select:text}
+.iconbtn{width:40px;height:40px;border-radius:50%;border:2px solid var(--line);background:var(--panel);color:var(--txt);font-size:18px;flex:none;display:flex;align-items:center;justify-content:center}
+#btnPower{
+  background: radial-gradient(circle at 30% 30%, #2c3e50, #000);
+  border: 4px solid var(--red);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5), inset 0 2px 5px rgba(255,255,255,0.1);
+  color: var(--red);
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-shadow: 0 0 8px rgba(231,76,60,.6);
+  transition: all 0.2s;
+}
+#btnPower.on{
+  border-color: var(--grn);
+  color: var(--grn);
+  box-shadow: 0 0 15px rgba(46,204,113,0.4), inset 0 0 10px rgba(46,204,113,0.2);
+  text-shadow: 0 0 8px var(--grn);
+}
+#btnPower:active{ transform: scale(0.95); }
+.vfo{padding:6px 10px;background:var(--panel2);border-bottom:1px solid var(--line)}
+.vfo .lbl{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden}
+.vfo .lbl .chip{border:1px solid var(--line);border-radius:6px;padding:2px 5px;background:var(--panel);color:var(--txt)}
+#freq{display:flex;align-items:baseline;margin:2px 0 4px 0}
+#freq .dg{font-size:34px;color:var(--freq);width:.62em;text-align:center;line-height:1.15}
+#freq .dg.dim{color:#27455e}
+#freq .sep{font-size:26px;color:#27455e}
+#freq .unit{font-size:16px;color:var(--acc);margin-left:8px}
+#vfob{margin-left:auto;font-size:11px;color:var(--dim)}
+#vfob b{color:#9fb8cc;font-weight:normal}
+.modes{display:flex;gap:5px;flex-wrap:wrap}
+.modes button,.pill{background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--txt);font-family:inherit;font-size:12px;padding:6px 10px}
+.modes button.sel{border-color:var(--grn);color:var(--grn);font-weight:bold}
+.pill{color:var(--acc)}
+.pill.org{border-color:#ff8c1a}
+.vfolbl{color:var(--dim)}
+.vfolbl.on{color:var(--grn);font-weight:bold;text-shadow:0 0 6px rgba(46,204,113,.5)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 10px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px}
+.panel h3{font-size:10px;letter-spacing:1px;color:var(--dim);margin-bottom:6px}
+.kv{display:flex;justify-content:space-between;font-size:12px;padding:3px 0}
+.kv .v{color:var(--acc)}
+.smeter-yaesu{width:100%;aspect-ratio:2/1;position:relative;margin:0 auto;overflow:hidden;border-radius:6px;background:#000}
+.smeter-yaesu img{width:100%;height:100%;display:block;border-radius:6px}
+.smeter-yaesu svg{position:absolute;inset:0;width:100%;height:100%}
+#smeterNeedle{stroke:#ff2a2a;stroke-width:5;stroke-linecap:round}
+#dbm{font-size:15px;color:var(--txt);margin-top:4px}
+.ledbar{display:flex;gap:2px;margin-top:5px;height:8px}
+.ledbar i{flex:1;background:#1c2836;border-radius:2px}
+.abar{height:8px;background:#1c2836;border-radius:4px;margin-top:5px;overflow:hidden}
+.abar div{height:100%;width:0%;background:linear-gradient(90deg,var(--grn),var(--yel));border-radius:4px}
+.tune{display:flex;align-items:center;gap:8px;padding:4px 10px}
+.tune button{width:44px;height:38px;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--txt);font-size:16px}
+.tune input{flex:1}
+input[type=range]{-webkit-appearance:none;height:26px;background:transparent}
+input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:4px;background:#1c2836}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--acc);margin-top:-7px}
+.tlabel{text-align:center;font-size:11px;color:var(--dim);padding:2px 0 0 0}
+#pan{width:100%;display:block;background:#000;border-bottom:1px solid #111}
+#wf{width:100%;display:block;background:#000}
+.panbtns{display:flex;gap:5px;padding:5px 10px;background:var(--panel2);flex-wrap:wrap}
+.panbtns button{background:var(--panel);border:1px solid #ff8c1a;border-radius:8px;color:var(--txt);font-family:inherit;font-size:11px;padding:5px 9px}
+.panbtns button.sel{color:var(--grn)}
+.ddmenu{position:fixed;background:#101a26;border:1px solid var(--acc);border-radius:10px;z-index:80;max-height:45vh;overflow-y:auto;min-width:120px;box-shadow:0 6px 18px rgba(0,0,0,.6)}
+.ddmenu button{display:block;width:100%;background:none;border:none;border-bottom:1px solid var(--line);color:var(--txt);font-family:inherit;font-size:14px;padding:10px 16px;text-align:center}
+.ddmenu button:last-child{border-bottom:none}
+.ddmenu button.cur{color:var(--grn);font-weight:bold}
+.ctl{padding:4px 10px}
+.ctl .cr{display:flex;align-items:center;gap:8px;padding:3px 0}
+.ctl .cr span.n{font-size:11px;color:var(--dim);width:74px;flex:none}
+.ctl .cr span.v{font-size:11px;color:var(--acc);width:64px;text-align:right;flex:none}
+.ctl .cr input{flex:1}
+.ctl .cr button.tgl{background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--dim);font-family:inherit;font-size:11px;padding:5px 9px;flex:none}
+.ctl .cr button.tgl.sel{border-color:var(--grn);color:var(--grn)}
+.overlay{position:fixed;inset:0;background:rgba(4,8,12,.82);display:none;z-index:50;align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;width:min(92vw,420px);max-height:86vh;overflow-y:auto}
+.modal h2{font-size:14px;color:var(--acc);margin-bottom:10px}
+.modal .cr{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12px}
+.modal .cr span.n{width:130px;flex:none;color:var(--dim)}
+.modal select,.modal input[type=number]{background:#0a1119;border:1px solid var(--line);border-radius:8px;color:var(--txt);font-family:inherit;font-size:13px;padding:6px}
+.modal .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.modal .btns button{background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--txt);font-family:inherit;font-size:13px;padding:8px 16px}
+.modal .btns button.pri{border-color:var(--acc);color:var(--acc)}
+.modal p{font-size:12px;color:var(--dim);line-height:1.5;user-select:text;-webkit-user-select:text}
+
+/* Teclado Numerico */
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.keypad button{background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--txt);font-family:inherit;font-size:18px;padding:15px;touch-action:manipulation}
+.keypad button:active{background:var(--line)}
+.keypad button.key-ent{background:var(--acc);color:#000;font-weight:bold}
+.keypad button.key-clr{color:var(--red)}
+#keyDisplay{background:#0a1119;border:1px solid var(--acc);border-radius:8px;color:var(--freq);font-size:24px;text-align:right;padding:10px;margin-bottom:10px;min-height:45px}
+
+#toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#182432;border:1px solid var(--acc);color:var(--txt);border-radius:10px;padding:10px 16px;font-size:12px;display:none;z-index:99;max-width:90vw}
+.footer{text-align:center;font-size:10px;color:#3a4a5a;padding:6px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="dot" id="dotConn"></div>
+  <div class="title">RXSDR-APP v1.0</div>
+  <div class="utc">UTC <span id="utc">--:--:--</span></div>
+  <button class="iconbtn" id="btnCfg">&#9881;</button>
+</div>
+
+<div class="row2">
+  <span class="badge" id="rxBadge">RX</span>
+  <div class="src">
+    <button id="srcUsb">USB</button>
+    <button id="srcTcp" class="sel">TCP</button>
+  </div>
+  <input id="addr" placeholder="192.168.1.10:1234" value="192.168.1.10:1234">
+</div>
+
+<div class="vfo">
+  <div style="display:flex; align-items:center; gap:8px">
+    <button class="iconbtn" id="btnPower" style="width:50px; height:50px; font-size:13px; flex:none">OFF</button>
+    <div style="flex:1">
+      <div class="lbl">
+        <span id="vfoALbl" class="vfolbl on">VFO A</span>
+        <span class="chip" id="chipTuner">---</span>
+        <button class="pill org" id="btnAB">A&#9654;B</button>
+        <button class="pill org" id="btnSwap">SWAP</button>
+        <span id="vfob">VFO B <b id="vfobF">7.100.000</b></span>
+      </div>
+      <div id="freq"></div>
+    </div>
+  </div>
+  <div class="modes" id="modes">
+    <button data-m="AM">AM</button>
+    <button data-m="USB">USB</button>
+    <button data-m="LSB">LSB</button>
+    <button data-m="CW">CW</button>
+    <button data-m="NFM">NFM</button>
+    <button data-m="WFM" class="sel">WFM</button>
+    <button class="pill" id="btnBw">BW 180k</button>
+    <button class="pill" id="btnStep">STEP 100k</button>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="panel">
+    <h3>S-METER</h3>
+    <div class="smeter-yaesu">
+      <img src="smeter_face.png" alt="">
+      <svg viewBox="0 0 900 450" preserveAspectRatio="none"><line id="smeterNeedle" x1="406" y1="625" x2="406" y2="101"/></svg>
+    </div>
+    <div class="ledbar" id="ledbar"></div>
+    <div id="dbm">--- dBm</div>
+  </div>
+  <div class="panel">
+    <h3>REDE / SDR</h3>
+    <div class="kv"><span>&#9660; RX</span><span class="v" id="netRate">0 KB/s</span></div>
+    <div class="kv"><span>TOTAL</span><span class="v" id="netTotal">0 MB</span></div>
+    <div class="kv"><span>TUNER</span><span class="v" id="netTuner">---</span></div>
+    <div class="kv"><span>AMOSTRAGEM</span><span class="v" id="netRateS">1.024M</span></div>
+    <div class="kv"><span>SQL</span><span class="v" id="sqState">ABERTO</span></div>
+    <h3 style="margin-top:6px">NIVEL DE AUDIO</h3>
+    <div class="abar"><div id="abarFill"></div></div>
+  </div>
+</div>
+
+<div class="tlabel" id="tuneLbl">SINTONIA (STEP 100 kHz)</div>
+<div class="tune">
+  <button id="tDown">&#9664;</button>
+  <input type="range" id="tSlider" min="0" max="1000" value="500">
+  <button id="tUp">&#9654;</button>
+</div>
+
+<div style="background:#000; border-top:1px solid var(--line); border-bottom:1px solid var(--line)">
+  <canvas id="pan" height="90"></canvas>
+  <canvas id="wf" height="200"></canvas>
+</div>
+
+<div class="panbtns">
+  <button id="bZoom">ZOOM x1</button>
+  <button id="bRange">FAIXA 60dB</button>
+  <button id="bWf">WF x1</button>
+  <button id="bAvg">MEDIA</button>
+  <button id="bKeep">TELA ATIVA</button>
+  <button id="bManual">MANUAL</button>
+</div>
+
+<div class="ctl">
+  <div class="cr">
+    <span class="n">VOLUME</span>
+    <input type="range" id="rVol" min="0" max="300" value="180">
+    <span class="v" id="vVol">180%</span>
+  </div>
+  <div class="cr">
+    <span class="n">NR RUIDO</span>
+    <input type="range" id="rNr" min="0" max="100" value="40">
+    <span class="v" id="vNr">40%</span>
+  </div>
+  <div class="cr">
+    <span class="n">GANHO RF</span>
+    <input type="range" id="rGain" min="0" max="496" value="326">
+    <span class="v" id="vGain">32.6dB</span>
+    <button class="tgl sel" id="bAgc">AGC</button>
+  </div>
+  <div class="cr">
+    <span class="n">PISO WF</span>
+    <input type="range" id="rWfC" min="0" max="255" value="123">
+    <span class="v" id="vWfC">123</span>
+  </div>
+  <div class="cr">
+    <span class="n">SQUELCH</span>
+    <input type="range" id="rSq" min="-150" max="-20" value="-150">
+    <span class="v" id="vSq">OFF</span>
+  </div>
+</div>
+
+
+
+<!-- Config -->
+<div class="overlay" id="ovCfg">
+  <div class="modal">
+    <h2>&#9881; CONFIGURA&Ccedil;&Atilde;O</h2>
+    <div class="cr"><span class="n">Amostragem SDR</span>
+      <select id="cRate"><option value="1024000">1.024 MSPS</option><option value="2048000">2.048 MSPS</option></select>
+    </div>
+    <div class="cr"><span class="n">Corre&ccedil;&atilde;o PPM</span><input type="number" id="cPpm" value="0" min="-200" max="200" style="width:80px"></div>
+    <div class="cr"><span class="n">Calibra&ccedil;&atilde;o S-meter</span><input type="number" id="cCal" value="-30" min="-90" max="30" style="width:80px"> dB</div>
+    <div class="cr"><span class="n">FFT quadros/s</span>
+      <select id="cFps"><option>10</option><option selected>15</option><option>20</option></select>
+    </div>
+    <div class="cr"><span class="n">Modo Direct Sampling</span>
+      <select id="cDirect">
+        <option value="AUTO">AUTO (<24MHz)</option>
+        <option value="ON">FOR&Ccedil;AR ON (Modo Q)</option>
+        <option value="OFF">FOR&Ccedil;AR OFF</option>
+      </select>
+    </div>
+    <div class="cr"><span class="n">Driver USB</span><button class="tgl" id="cDriver" style="border-color:var(--acc);color:var(--acc)">Instalar driver RTL-SDR</button></div>
+    <p style="margin-top:8px">Frequ&ecirc;ncias abaixo de 24 MHz usam amostragem direta (ramo Q) automaticamente &mdash; requer dongle com essa modifica&ccedil;&atilde;o ou v3.</p>
+    <p style="margin-top:8px">RXSDR-APP v1.0 &mdash; receptor SDR para RTL-SDR (USB) e RTL-TCP.<br>Desenvolvido por PU1XTB. 73!</p>
+    <div class="btns"><button class="pri" id="cClose">FECHAR</button></div>
+  </div>
+</div>
+
+<!-- Sair -->
+<div class="overlay" id="ovExit">
+  <div class="modal">
+    <h2>Sair do RXSDR-APP?</h2>
+    <p style="text-align:center;color:var(--acc);font-size:14px;margin:4px 0 8px 0">73 de PU1XTB</p>
+    <div class="btns">
+      <button id="exCancel">CANCELAR</button>
+      <button class="pri" id="exOk">SAIR</button>
+    </div>
+  </div>
+</div>
+
+<!-- Driver ausente -->
+<div class="overlay" id="ovDriver">
+  <div class="modal">
+    <h2>Driver RTL-SDR necess&aacute;rio</h2>
+    <p>Para usar o dongle no USB &eacute; preciso instalar o app gratuito
+    <b>RTL-SDR driver</b> (marto.rtl_tcp_andro) da Play Store.</p>
+    <div class="btns">
+      <button id="drCancel">CANCELAR</button>
+      <button class="pri" id="drOk">INSTALAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- Teclado de Frequencia -->
+<div class="overlay" id="ovKeypad">
+  <div class="modal">
+    <h2>DIGITAR FREQU&Ecirc;NCIA (MHz)</h2>
+    <div id="keyDisplay"></div>
+    <div class="keypad">
+      <button onclick="keyIn('1')">1</button><button onclick="keyIn('2')">2</button><button onclick="keyIn('3')">3</button>
+      <button onclick="keyIn('4')">4</button><button onclick="keyIn('5')">5</button><button onclick="keyIn('6')">6</button>
+      <button onclick="keyIn('7')">7</button><button onclick="keyIn('8')">8</button><button onclick="keyIn('9')">9</button>
+      <button onclick="keyIn('.')">.</button><button onclick="keyIn('0')">0</button><button class="key-clr" onclick="keyIn('C')">C</button>
+      <button style="grid-column: span 2" onclick="keyIn('DEL')">APAGAR</button>
+      <button class="key-ent" onclick="keyIn('OK')">ENTER</button>
+    </div>
+    <div class="btns"><button onclick="$('ovKeypad').className='overlay'">CANCELAR</button></div>
+  </div>
+</div>
+
+<!-- Manual -->
+<div class="overlay" id="ovManual">
+  <div class="modal" style="max-width:96vw;width:520px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <h2 style="margin:0;flex:1">&#128214; MANUAL DE OPERA&Ccedil;&Atilde;O</h2>
+      <button class="tgl" id="mnMinus" style="font-size:15px;padding:6px 12px">A-</button>
+      <button class="tgl" id="mnPlus" style="font-size:15px;padding:6px 12px">A+</button>
+    </div>
+    <pre id="mnText" style="white-space:pre-wrap;font-family:inherit;font-size:12px;line-height:1.55;color:var(--txt);user-select:text;-webkit-user-select:text">==============================================================
+        RXSDR-APP - MANUAL DE OPERACAO
+        Receptor SDR para Android (RX)
+==============================================================
+
+1. O QUE E O RXSDR-APP
+----------------------
+Receptor de radio por SDR (Software Defined Radio) que roda
+inteiramente no celular. Ele recebe as amostras de RF de um
+dongle RTL-SDR e faz todo o processamento no aparelho:
+espectro, cachoeira, demodulacao e audio.
+
+Modos de recepcao: AM, USB, LSB, CW, NFM e WFM (radio FM).
+Cobertura tipica do dongle: 24 MHz a 1,7 GHz, e abaixo de
+24 MHz (HF) por amostragem direta automatica (dongles v3 ou
+modificados).
+
+2. FONTES DE SINAL (USB / TCP)
+------------------------------
+- USB: dongle RTL-SDR ligado direto no celular por cabo OTG.
+  Requer o app gratuito &quot;RTL-SDR driver&quot; (o RXSDR-APP oferece
+  instalar na primeira vez). Escolha USB e aperte o botao
+  redondo de ligar.
+- TCP: dongle em outro equipamento da rede (PC, Raspberry,
+  TV Box) rodando rtl_tcp. Escolha TCP, digite IP:porta
+  (ex.: 192.168.3.10:1234) e aperte o botao de ligar.
+
+3. BOTAO LIGA/DESLIGA
+---------------------
+Botao redondo grande a esquerda do VFO:
+- OFF (vermelho): desligado. Toque para conectar.
+- ... : conectando.
+- ON (verde): recebendo. Toque para desconectar.
+
+4. VFO A / VFO B
+----------------
+O visor grande mostra a frequencia do VFO em uso - o nome
+aceso em verde (VFO A ou VFO B) indica qual esta ativo.
+- Digitos: a frequencia e editada tocando em cima dos
+  proprios numeros do VFO - metade de CIMA do digito soma,
+  metade de BAIXO subtrai (com vai-um automatico).
+- &quot;MHz&quot;: toque para digitar a frequencia completa pelo
+  teclado numerico.
+- A&gt;B: copia o VFO ativo para o outro VFO.
+- SWAP: troca A pelo B (frequencia e modo) e alterna qual
+  esta ativo.
+
+5. MODOS, BW E STEP
+-------------------
+- AM / USB / LSB / CW / NFM / WFM: selecionam o modo. Ao
+  escolher, a largura (BW) e o passo (STEP) mudam para o
+  padrao do modo (ex.: LSB/USB -&gt; STEP 1k, WFM -&gt; 200k).
+- BW: abre a lista de larguras de filtro do modo atual.
+- STEP: abre a lista de passos de sintonia (10 Hz a 1 MHz).
+
+6. S-METER (MEDIDOR DE SINAL)
+-----------------------------
+- Ponteiro analogico estilo Yaesu: S0 a S9 na escala preta,
+  +10 a +60 dB na vermelha. Sobe rapido e desce devagar,
+  como um instrumento mecanico.
+- Barra de LEDs: mesma leitura em formato digital.
+- Leitura numerica: dBm e valor S (ex.: -90.1 dBm S6).
+- A calibracao fica na CONFIGURACAO (engrenagem).
+Obs.: em HF o proprio ruido da banda ja marca S5-S7; o
+ponteiro so cai ao zero quando desconectado.
+
+7. PAINEL REDE / SDR
+--------------------
+- RX: velocidade de dados recebidos (aprox. 2 MB/s a 1.024M).
+- TOTAL: dados acumulados na sessao.
+- TUNER: chip do dongle (R820T etc.). &quot;(DS)&quot; indica
+  amostragem direta ativa (HF).
+- AMOSTRAGEM: taxa do SDR.
+- SQL: estado do squelch (ABERTO/FECHADO).
+- NIVEL DE AUDIO: barra do audio demodulado.
+
+8. SINTONIA
+-----------
+- Setas &lt; e &gt; : um passo por toque. SEGURE para correr a
+  frequencia continuamente (acelera apos 2 segundos).
+- Barra deslizante: sintonia rapida em torno da frequencia
+  atual (+-50 passos). Ao soltar, volta ao centro.
+- Espectro/cachoeira: ARRASTE para os lados para sintonizar
+  (a linha acompanha o dedo). TOQUE na cachoeira para pular
+  direto para a frequencia tocada. PINCA no espectro = zoom.
+
+9. ESPECTRO E CACHOEIRA
+-----------------------
+Linha tracejada vermelha = frequencia sintonizada. A faixa
+sombreada mostra a largura do filtro (BW). Escala de dBm a
+esquerda e de frequencia no topo.
+
+Botoes (moldura laranja):
+- ZOOM: aproximacao do espectro (x1 a x16).
+- FAIXA: alcance vertical em dB (60 a 110 dB).
+- WF: velocidade da cachoeira (LENTA/NORMAL/RAPIDA/TURBO).
+- MEDIA: suaviza o espectro (media entre quadros).
+- TELA ATIVA: pressionado (verde) = a tela nunca apaga.
+  Solto = a tela apaga no tempo normal do Android e o RADIO
+  CONTINUA TOCANDO em segundo plano (aparece uma notificacao
+  &quot;RXSDR-APP - Recebendo&quot;).
+- MANUAL: abre este manual. Para aumentar a letra, use os
+  botoes A- / A+ ou faca o gesto de PINCA com dois dedos.
+
+10. CONTROLES DESLIZANTES
+-------------------------
+- VOLUME: ate 300%. Acima de 100% ha reforco com limitador
+  suave (sem distorcao aspera).
+- NR RUIDO: redutor de ruido para HF (subtracao espectral).
+  0 = desligado. 40-60% e um bom ponto para SSB. Ele &quot;ouve&quot;
+  o ruido por ~2 segundos apos ligar para aprender o piso.
+  Nao atua em WFM.
+- GANHO RF: ganho do tuner (0 a 49.6 dB). O app envia sempre
+  o valor valido mais proximo da tabela do chip. Dica: 25-35
+  dB para sinais fortes; mais alto em antenas modestas.
+  AGC: ganho automatico do tuner (moderado). Ao tocar no
+  slider, o AGC desliga e vale o valor manual.
+- PISO WF: nivel minimo de cor da cachoeira (contraste).
+  123 e um bom ponto de partida.
+- SQUELCH: silencia o audio abaixo do nivel escolhido (dBm).
+  Todo a esquerda = OFF (sempre aberto).
+
+11. CONFIGURACAO (ENGRENAGEM)
+-----------------------------
+- Amostragem SDR: 1.024 ou 2.048 MSPS (espectro mais largo,
+  mais CPU e mais rede).
+- Correcao PPM: desvio do cristal do dongle.
+- Calibracao S-meter: desloca a leitura em dB para casar com
+  um sinal de referencia conhecido.
+- FFT quadros/s: fluidez do espectro (10/15/20).
+- Driver USB: instala o &quot;RTL-SDR driver&quot; da Play Store.
+Frequencias abaixo de 24 MHz ativam automaticamente a
+amostragem direta (ramo Q) - requer dongle v3 ou modificado.
+
+12. AUDIO EM SEGUNDO PLANO
+--------------------------
+Com o radio ligado, o app mantem um servico ativo que segura
+o Wi-Fi e a CPU: pode apagar a tela ou trocar de app que o
+audio continua. Para encerrar de vez, aperte OFF ou saia do
+app (botao voltar &gt; SAIR).
+Se o audio parar com a tela apagada em celulares com economia
+de bateria agressiva (Xiaomi, Samsung...), libere o RXSDR-APP
+na otimizacao de bateria do aparelho.
+
+13. DICAS RAPIDAS
+-----------------
+- Cachoeira toda vermelha? Reduza o GANHO RF ou suba o PISO WF.
+- Nada se ouve? Veja o SQL (squelch pode estar fechado) e o
+  VOLUME; confira se ha sinal na cachoeira.
+- HF fraco? Verifique antena e aumente o GANHO RF; ligue o NR.
+- Ponteiro parado no meio? E o ruido da banda (normal em HF).
+- rtl_tcp no PC/TV Box: rtl_tcp -a 0.0.0.0 -p 1234 -s 1024000
+
+==============================================================
+     Desenvolvido por PU1XTB Ruben - ARARUAMA RJ
+==============================================================
+</pre>
+    <div class="btns"><button class="pri" id="mnClose">FECHAR</button></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+// ===================== ESTADO =====================
+var S = {
+  vfo: 93700000, vfoB: 7100000, modeB: "LSB", activeName: "A", keepScreen: false, mnFont: 12,
+  mode: "WFM", bw: 180000, step: 100000,
+  center: 93950000, rate: 1024000,
+  zoom: 1, dispRange: 60, dispTop: -20,
+  wfSpeed: 2, avg: false,
+  vol: 180, sq: -150, gain: 326, agc: false,
+  cal: -30, ppm: 0, fps: 15,
+  wfContrast: 123, // 0..255 (representa o offset)
+  nr: 40, // reducao de ruido 0..100
+  directMode: "AUTO", // "AUTO", "ON", "OFF"
+  src: "TCP", addr: "192.168.1.10:1234",
+  connected: false, connecting: false,
+  smeter: -130, sqOpen: true
+};
+var BW_OPTS = {
+  AM:  [4000,6000,8000,10000],
+  USB: [1800,2400,2700,3000,3400],
+  LSB: [1800,2400,2700,3000,3400],
+  CW:  [200,500,1000],
+  NFM: [8000,12000,16000,25000],
+  WFM: [180000,200000]
+};
+var BW_DEF = {AM:6000,USB:2700,LSB:2700,CW:500,NFM:12000,WFM:180000};
+var STEPS = [10,50,100,500,1000,2500,5000,6250,9000,10000,12500,25000,50000,100000,200000,500000,1000000];
+var FMIN = 0, FMAX = 1766000000;
+
+function $(id){ return document.getElementById(id); }
+function A(){ return (typeof Android !== "undefined") ? Android : null; }
+
+function saveCfg(){
+  try{
+    localStorage.setItem("rxsdrapp2", JSON.stringify({
+      vfo:S.vfo, vfoB:S.vfoB, modeB:S.modeB, mode:S.mode, bw:S.bw, step:S.step,
+      zoom:S.zoom, wfSpeed:S.wfSpeed, vol:S.vol, sq:S.sq,
+      gain:S.gain, agc:S.agc, cal:S.cal, ppm:S.ppm, fps:S.fps,
+      wfContrast:S.wfContrast, directMode:S.directMode, nr:S.nr, defv14:true, defv18:true,
+      activeName:S.activeName, keepScreen:S.keepScreen, defv19:true, mnFont:S.mnFont,
+      src:S.src, addr:S.addr, rate:S.rate, avg:S.avg
+    }));
+  }catch(e){}
+}
+function loadCfg(){
+  try{
+    var c = JSON.parse(localStorage.getItem("rxsdrapp2") || "{}");
+    for (var k in c) if (S.hasOwnProperty(k)) S[k] = c[k];
+    if (!c.defv14){ S.wfSpeed = 2; S.dispRange = 60; }
+    if (!c.defv18){ S.vol = 180; S.gain = 326; S.wfContrast = 158; S.nr = 40; S.sq = -150; }
+    if (!c.defv19){ S.wfContrast = 123; }
+  }catch(e){}
+}
+
+function toast(msg, ms){
+  var t = $("toast");
+  t.textContent = msg;
+  t.style.display = "block";
+  clearTimeout(t._tm);
+  t._tm = setTimeout(function(){ t.style.display = "none"; }, ms || 3000);
+}
+function fmtFreq(hz){
+  var s = String(Math.round(hz));
+  return s.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+function fmtStep(hz){
+  if (hz >= 1000000) return (hz/1000000) + "M";
+  if (hz >= 1000) return (hz/1000).toString().replace(/\.0$/,"") + "k";
+  return hz + "";
+}
+function fmtBw(hz){
+  if (hz >= 1000) return (hz/1000).toString().replace(/\.0$/,"") + "k";
+  return hz + "";
+}
+
+// ===================== DISPLAY DE FREQUENCIA =====================
+var DIGITS = 10; // ate 9.999.999.999
+function buildFreqDisplay(){
+  var el = $("freq");
+  el.innerHTML = "";
+  for (var i = 0; i < DIGITS; i++){
+    if (i > 0 && (DIGITS - i) % 3 === 0){
+      var sp = document.createElement("span");
+      sp.className = "sep"; sp.textContent = ".";
+      el.appendChild(sp);
+    }
+    var d = document.createElement("span");
+    d.className = "dg"; d.textContent = "0";
+    d.dataset.pow = String(DIGITS - 1 - i);
+    (function(dd){
+      dd.addEventListener("touchstart", function(ev){
+        ev.preventDefault();
+        var r = dd.getBoundingClientRect();
+        var y = ev.touches[0].clientY - r.top;
+        var delta = Math.pow(10, parseInt(dd.dataset.pow));
+        setVfo(S.vfo + (y < r.height/2 ? delta : -delta));
+      }, {passive:false});
+      dd.addEventListener("mousedown", function(ev){
+        var r = dd.getBoundingClientRect();
+        var delta = Math.pow(10, parseInt(dd.dataset.pow));
+        setVfo(S.vfo + ((ev.clientY - r.top) < r.height/2 ? delta : -delta));
+      });
+    })(d);
+    el.appendChild(d);
+  }
+  var u = document.createElement("span");
+  u.className = "unit"; u.textContent = "MHz";
+  u.addEventListener("click", function(){
+    var v = prompt("Frequência em MHz:", (S.vfo/1e6).toFixed(6));
+    if (v){
+      v = parseFloat(String(v).replace(",", "."));
+      if (!isNaN(v)) setVfo(Math.round(v * 1e6));
+    }
+  });
+  el.appendChild(u);
+  // Clique na area de frequencia para abrir o teclado
+  el.onclick = function(){
+    keyString = "";
+    updateKeyDisplay();
+    $("ovKeypad").className = "overlay show";
+  };
+}
+var keyString = "";
+function updateKeyDisplay(){
+  $("keyDisplay").textContent = keyString || "0";
+}
+function keyIn(k){
+  if (k === 'C'){ keyString = ""; }
+  else if (k === 'DEL'){ keyString = keyString.slice(0, -1); }
+  else if (k === 'OK'){
+    var val = parseFloat(keyString);
+    if (!isNaN(val)) setVfo(Math.round(val * 1e6));
+    $("ovKeypad").className = "overlay";
+  }
+  else {
+    if (keyString.length < 12) {
+        if (k === '.' && keyString.includes('.')) return;
+        keyString += k;
+    }
+  }
+  updateKeyDisplay();
+}
+
+function renderFreq(){
+  var s = String(Math.round(S.vfo));
+  while (s.length < DIGITS) s = "0" + s;
+  var dgs = $("freq").querySelectorAll(".dg");
+  var leading = true;
+  for (var i = 0; i < DIGITS; i++){
+    var ch = s.charAt(i);
+    dgs[i].textContent = ch;
+    if (ch !== "0") leading = false;
+    dgs[i].className = "dg" + ((leading && ch === "0" && i < DIGITS-1) ? " dim" : "");
+  }
+  var other = (S.activeName === "A") ? "B" : "A";
+  $("vfoALbl").textContent = "VFO " + S.activeName;
+  $("vfob").innerHTML = "VFO " + other + " <b id=\"vfobF\">" + fmtFreq(S.vfoB) + "</b>";
+}
+function setVfo(hz){
+  hz = Math.max(FMIN, Math.min(FMAX, Math.round(hz)));
+  S.vfo = hz;
+  renderFreq();
+  var a = A(); if (a) a.setVfo(String(hz));
+  saveCfg();
+}
+
+// ===================== MODOS / BW / PASSO =====================
+function setMode(m, keepBw){
+  S.mode = m;
+  if (!keepBw) S.bw = BW_DEF[m];
+  var stepDef = {USB:1000, LSB:1000, NFM:10000, WFM:200000};
+  if (!keepBw && stepDef[m]){
+    S.step = stepDef[m];
+    $("btnStep").textContent = "STEP " + fmtStep(S.step);
+    $("tuneLbl").textContent = "SINTONIA (STEP " + fmtStep(S.step) + ")";
+  }
+  var bts = $("modes").querySelectorAll("button[data-m]");
+  for (var i = 0; i < bts.length; i++)
+    bts[i].className = (bts[i].dataset.m === m) ? "sel" : "";
+  $("btnBw").textContent = "BW " + fmtBw(S.bw);
+  var a = A();
+  if (a){ a.setMode(m); a.setBandwidth(S.bw); }
+  saveCfg();
+}
+// ---------- dropdown generico ----------
+var ddEl = null;
+function closeDd(){ if (ddEl){ ddEl.parentNode.removeChild(ddEl); ddEl = null; } }
+function openDd(anchor, items, current, up, cb){
+  if (ddEl){ closeDd(); return; }
+  var m = document.createElement("div");
+  m.className = "ddmenu";
+  items.forEach(function(it){
+    var b = document.createElement("button");
+    b.textContent = it.label;
+    if (it.value === current) b.className = "cur";
+    b.addEventListener("click", function(ev){
+      ev.stopPropagation();
+      closeDd();
+      cb(it.value);
+    });
+    m.appendChild(b);
+  });
+  document.body.appendChild(m);
+  var r = anchor.getBoundingClientRect();
+  var left = Math.max(6, Math.min(r.left, window.innerWidth - m.offsetWidth - 6));
+  m.style.left = left + "px";
+  if (up) m.style.top = Math.max(6, r.top - m.offsetHeight - 6) + "px";
+  else m.style.top = (r.bottom + 6) + "px";
+  ddEl = m;
+  setTimeout(function(){
+    document.addEventListener("click", function h(){
+      document.removeEventListener("click", h);
+      closeDd();
+    });
+  }, 50);
+}
+
+$("modes").addEventListener("click", function(ev){
+  var m = ev.target.dataset && ev.target.dataset.m;
+  if (m) setMode(m);
+});
+$("btnBw").addEventListener("click", function(ev){
+  ev.stopPropagation();
+  openDd(this, BW_OPTS[S.mode].map(function(v){ return {label:fmtBw(v), value:v}; }), S.bw, false, function(v){
+    S.bw = v;
+    $("btnBw").textContent = "BW " + fmtBw(v);
+    var a = A(); if (a) a.setBandwidth(v);
+    saveCfg();
+  });
+});
+$("btnStep").addEventListener("click", function(ev){
+  ev.stopPropagation();
+  openDd(this, STEPS.map(function(v){ return {label:fmtStep(v), value:v}; }), S.step, false, function(v){
+    S.step = v;
+    $("btnStep").textContent = "STEP " + fmtStep(v);
+    $("tuneLbl").textContent = "SINTONIA (STEP " + fmtStep(v) + ")";
+    saveCfg();
+  });
+});
+$("btnAB").addEventListener("click", function(){
+  S.vfoB = S.vfo; S.modeB = S.mode;
+  renderFreq(); saveCfg(); toast("VFO " + S.activeName + " copiado para " + (S.activeName === "A" ? "B" : "A"));
+});
+$("btnSwap").addEventListener("click", function(){
+  var f = S.vfo, m = S.mode;
+  S.activeName = (S.activeName === "A") ? "B" : "A";
+  setVfo(S.vfoB); setMode(S.modeB, false);
+  S.vfoB = f; S.modeB = m;
+  renderFreq(); saveCfg();
+});
+
+// ===================== SINTONIA =====================
+// segurar a seta: repete o passo ate soltar (acelera apos 2 s)
+function holdRepeat(el, fn){
+  var tm = null, iv = null, t0 = 0;
+  function start(ev){
+    ev.preventDefault();
+    if (tm || iv) return;
+    fn();
+    t0 = Date.now();
+    tm = setTimeout(function(){
+      iv = setInterval(function(){
+        fn();
+        if (Date.now() - t0 > 2000 && iv){
+          clearInterval(iv);
+          iv = setInterval(fn, 60);   // acelera
+        }
+      }, 150);
+    }, 400);
+  }
+  function stop(){
+    clearTimeout(tm); clearInterval(iv);
+    tm = null; iv = null;
+  }
+  el.addEventListener("touchstart", start, {passive:false});
+  el.addEventListener("touchend", stop);
+  el.addEventListener("touchcancel", stop);
+  el.addEventListener("mousedown", start);
+  el.addEventListener("mouseup", stop);
+  el.addEventListener("mouseleave", stop);
+}
+holdRepeat($("tDown"), function(){ setVfo(Math.round((S.vfo - S.step)/S.step)*S.step); });
+holdRepeat($("tUp"), function(){ setVfo(Math.round((S.vfo + S.step)/S.step)*S.step); });
+var tsBase = 0, tsActive = false;
+$("tSlider").addEventListener("touchstart", function(){ tsBase = S.vfo; tsActive = true; });
+$("tSlider").addEventListener("mousedown", function(){ tsBase = S.vfo; tsActive = true; });
+$("tSlider").addEventListener("input", function(){
+  if (!tsActive){ tsBase = S.vfo; tsActive = true; }
+  var off = (parseInt(this.value) - 500) / 10; // -50..+50 passos
+  setVfo(Math.round((tsBase + off * S.step)/S.step)*S.step);
+});
+function tsEnd(){ tsActive = false; $("tSlider").value = 500; }
+$("tSlider").addEventListener("touchend", tsEnd);
+$("tSlider").addEventListener("mouseup", tsEnd);
+
+// ===================== CONTROLES =====================
+$("rVol").addEventListener("input", function(){
+  S.vol = parseInt(this.value);
+  $("vVol").textContent = S.vol + "%";
+  var a = A(); if (a) a.setVolume(Math.pow(S.vol/100, 2));
+  saveCfg();
+});
+$("rSq").addEventListener("input", function(){
+  S.sq = parseInt(this.value);
+  $("vSq").textContent = (S.sq <= -150) ? "OFF" : (S.sq + "dB");
+  var a = A(); if (a) a.setSquelch(S.sq);
+  saveCfg();
+});
+$("rGain").addEventListener("input", function(){
+  S.gain = parseInt(this.value);
+  S.agc = false;
+  $("bAgc").className = "tgl";
+  $("vGain").textContent = (S.gain/10).toFixed(1) + "dB";
+  var a = A(); if (a) a.setGainTenths(S.gain);
+  saveCfg();
+});
+$("rNr").addEventListener("input", function(){
+  S.nr = parseInt(this.value);
+  $("vNr").textContent = S.nr === 0 ? "OFF" : (S.nr + "%");
+  var a = A(); if (a) a.setNr(S.nr/100);
+  saveCfg();
+});
+$("rWfC").addEventListener("input", function(){
+  S.wfContrast = parseInt(this.value);
+  $("vWfC").textContent = S.wfContrast;
+  saveCfg();
+});
+$("bAgc").addEventListener("click", function(){
+  S.agc = !S.agc;
+  this.className = "tgl" + (S.agc ? " sel" : "");
+  var a = A();
+  if (a){ if (S.agc) a.setAgcHw(true); else a.setGainTenths(S.gain); }
+  saveCfg();
+});
+
+// ===================== FONTE / CONEXAO =====================
+function setSrc(s){
+  S.src = s;
+  $("srcUsb").className = (s === "USB") ? "sel" : "";
+  $("srcTcp").className = (s === "TCP") ? "sel" : "";
+  $("addr").style.opacity = (s === "TCP") ? "1" : ".35";
+  saveCfg();
+}
+$("srcUsb").addEventListener("click", function(){ setSrc("USB"); });
+$("srcTcp").addEventListener("click", function(){ setSrc("TCP"); });
+
+function pushAllSettings(){
+  var a = A(); if (!a) return;
+  a.setVfo(String(S.vfo));
+  a.setMode(S.mode);
+  a.setBandwidth(S.bw);
+  a.setVolume(Math.pow(S.vol/100, 2));
+  a.setSquelch(S.sq);
+  a.setCal(S.cal);
+  a.setPpm(S.ppm);
+  a.setFftFps(S.fps);
+  a.setSampleRate(S.rate);
+  a.setDirectMode(S.directMode);
+  a.setNr(S.nr/100);
+  if (S.agc) a.setAgcHw(true); else a.setGainTenths(S.gain);
+}
+$("btnPower").addEventListener("click", function(){
+  var a = A();
+  if (!a){ toast("Executando fora do app Android"); return; }
+  if (S.connected || S.connecting){
+    a.disconnect(); S.connecting = false;
+    return;
+  }
+  pushAllSettings();
+  if (S.src === "USB"){
+    S.connecting = true;
+    updateConnUi();
+    toast("Abrindo driver RTL-SDR (USB)...");
+    a.connectUsb();
+  } else {
+    var ad = $("addr").value.trim();
+    S.addr = ad; saveCfg();
+    var parts = ad.split(":");
+    var host = parts[0];
+    var port = parseInt(parts[1] || "1234");
+    if (!host){ toast("Endereço inválido"); return; }
+    S.connecting = true;
+    updateConnUi();
+    toast("Conectando a " + host + ":" + port + "...");
+    a.connectTcp(host, port);
+  }
+});
+
+// ===================== CALLBACKS DO ANDROID =====================
+var spec = null; // Uint8Array 2048
+function onSpec(b64, center, rate, vfo){
+  S.center = center; S.rate = rate;
+  var bin = atob(b64);
+  if (!spec || spec.length !== bin.length) spec = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) spec[i] = bin.charCodeAt(i);
+  drawPan();
+  drawWf();
+}
+function onStatus(o){
+  S.smeter = o.smeter;
+  S.sqOpen = o.sq;
+  $("netRate").textContent = (o.rate > 1048576)
+      ? (o.rate/1048576).toFixed(2) + " MB/s"
+      : (o.rate/1024).toFixed(0) + " KB/s";
+  $("netTotal").textContent = (o.total/1048576).toFixed(1) + " MB";
+  $("netTuner").textContent = (o.tuner || "---") + (o.ds ? " (DS)" : "");
+  $("sqState").textContent = o.sq ? "ABERTO" : "FECHADO";
+  $("sqState").style.color = o.sq ? "var(--grn)" : "var(--red)";
+  $("dbm").textContent = (S.smeter <= -129 ? "---" : S.smeter.toFixed(1)) + " dBm  " + sUnits(S.smeter);
+  $("abarFill").style.width = Math.min(100, o.audio * 260) + "%";
+  drawLeds(S.smeter);
+  if (o.connected !== S.connected){
+    S.connected = o.connected;
+    updateConnUi();
+  }
+}
+function onConnected(tuner){
+  S.connected = true; S.connecting = false;
+  $("chipTuner").textContent = tuner || "SDR";
+  updateConnUi();
+  toast("Conectado! Tuner: " + tuner);
+}
+function onDisconnected(reason){
+  var was = S.connected || S.connecting;
+  S.connected = false; S.connecting = false;
+  updateConnUi();
+  if (was) toast("Desconectado: " + reason);
+}
+function onCenter(hz){ S.center = hz; }
+function onUsbError(msg){
+  S.connecting = false;
+  updateConnUi();
+  if (String(msg).indexOf("BUSY") >= 0){
+    toast("Dongle ocupado por outro programa! Abra o app do driver RTL-SDR, pare o stream (STOP), feche-o e tente ligar de novo. Nao use START STREAM manualmente - o RXSDR-APP inicia o driver sozinho.", 9000);
+  } else {
+    toast("Erro USB: " + msg, 6000);
+  }
+}
+function onDriverMissing(){
+  S.connecting = false;
+  updateConnUi();
+  $("ovDriver").className = "overlay show";
+}
+function onBackButton(){
+  if (ddEl){ closeDd(); return; }
+  var ovs = document.querySelectorAll(".overlay.show");
+  if (ovs.length){ ovs.forEach(function(o){ o.className = "overlay"; }); return; }
+  $("ovExit").className = "overlay show";
+}
+function updateConnUi(){
+  $("dotConn").className = "dot" + (S.connected ? " on" : "");
+  $("btnPower").className = "iconbtn" + (S.connected ? " on" : "");
+  $("btnPower").textContent = S.connected ? "ON" : (S.connecting ? "..." : "OFF");
+  // Se conectado, o botao de ligar fica verde brilhante
+  if (!S.connected){
+    $("netTuner").textContent = "---";
+    $("chipTuner").textContent = "---";
+  }
+}
+
+// ===================== PANADAPTER =====================
+var pan = $("pan"), pctx = pan.getContext("2d");
+var wf = $("wf"), wctx = wf.getContext("2d");
+var mapImg = new Image(); mapImg.src = "worldmap.png";
+var nightCv = document.createElement("canvas");
+nightCv.width = 360; nightCv.height = 180;
+var lastNight = 0;
+
+function sizeCanvases(){
+  var w = document.body.clientWidth;
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  pan.width = Math.round(w * dpr); pan.height = Math.round(90 * dpr);
+  wf.width = Math.round(w * dpr); wf.height = Math.round(200 * dpr);
+  pan.style.height = "90px"; wf.style.height = "200px";
+}
+window.addEventListener("resize", sizeCanvases);
+
+function renderNight(){
+  var now = Date.now();
+  if (now - lastNight < 60000) return;
+  lastNight = now;
+  var d = new Date();
+  // declinacao solar e hora solar
+  var start = Date.UTC(d.getUTCFullYear(), 0, 0);
+  var doy = (d.getTime() - start) / 86400000;
+  var decl = -23.44 * Math.cos(2 * Math.PI / 365 * (doy + 10)) * Math.PI / 180;
+  var utcH = d.getUTCHours() + d.getUTCMinutes()/60 + d.getUTCSeconds()/3600;
+  var ctx = nightCv.getContext("2d");
+  var img = ctx.createImageData(360, 180);
+  var p = img.data;
+  var sinD = Math.sin(decl), cosD = Math.cos(decl);
+  for (var y = 0; y < 180; y++){
+    var lat = (90 - y - 0.5) * Math.PI / 180;
+    var sinL = Math.sin(lat), cosL = Math.cos(lat);
+    for (var x = 0; x < 360; x++){
+      var lon = (x + 0.5 - 180);
+      var ha = ((utcH * 15 + lon + 180) % 360 - 180) * Math.PI / 180;
+      var elev = sinL * sinD + cosL * cosD * Math.cos(ha);
+      var i = (y * 360 + x) * 4;
+      p[i] = 0; p[i+1] = 0; p[i+2] = 8;
+      p[i+3] = elev < -0.05 ? 150 : (elev < 0.05 ? Math.round(150 * (0.05 - elev) / 0.1) : 0);
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+function viewWindow(){
+  var span = S.rate / S.zoom;
+  var lo, hi;
+  if (S.zoom === 1){
+    lo = S.center - S.rate/2; hi = S.center + S.rate/2;
+  } else {
+    lo = S.vfo - span/2; hi = S.vfo + span/2;
+    var min = S.center - S.rate/2, max = S.center + S.rate/2;
+    if (lo < min){ lo = min; hi = min + span; }
+    if (hi > max){ hi = max; lo = max - span; }
+  }
+  return {lo:lo, hi:hi, span:span};
+}
+function niceStep(span, target){
+  var raw = span / target;
+  var mags = [1,2,2.5,5,10];
+  var pow = Math.pow(10, Math.floor(Math.log(raw)/Math.LN10));
+  for (var i = 0; i < mags.length; i++)
+    if (mags[i]*pow >= raw) return mags[i]*pow;
+  return 10*pow;
+}
+var avgSpec = null;
+
+function drawPan(){
+  if (!spec) return;
+  var W = pan.width, H = pan.height;
+  var v = viewWindow();
+  pctx.fillStyle = "#03060a";
+  pctx.fillRect(0, 0, W, H);
+
+  var dispBot = S.dispTop - S.dispRange;
+  var binHz = S.rate / spec.length;
+  var f0 = S.center - S.rate/2;
+  var data = spec;
+  if (S.avg){
+    if (!avgSpec || avgSpec.length !== spec.length) avgSpec = new Float32Array(spec);
+    for (var i = 0; i < spec.length; i++) avgSpec[i] = avgSpec[i]*0.8 + spec[i]*0.2;
+    data = avgSpec;
+  }
+  // grade de dB
+  pctx.strokeStyle = "rgba(90,120,150,.18)";
+  pctx.fillStyle = "rgba(140,170,200,.55)";
+  pctx.font = Math.round(10 * (W/document.body.clientWidth)) + "px monospace";
+  pctx.lineWidth = 1;
+  for (var db = Math.ceil(dispBot/20)*20; db <= S.dispTop; db += 20){
+    var y = H * (S.dispTop - db) / S.dispRange;
+    pctx.beginPath(); pctx.moveTo(0, y); pctx.lineTo(W, y); pctx.stroke();
+    pctx.fillText(db + " dBm", 4, y - 3);
+  }
+  // espectro
+  pctx.beginPath();
+  for (var x = 0; x <= W; x += 2){
+    var f = v.lo + v.span * x / W;
+    var b = (f - f0) / binHz;
+    var b0 = Math.floor(b);
+    var val;
+    if (b0 < 0 || b0 >= data.length - 1) val = 0;
+    else {
+      var b1 = Math.floor((v.lo + v.span * (x+2) / W - f0) / binHz);
+      val = data[b0];
+      for (var k = b0+1; k <= Math.min(b1, data.length-1); k++)
+        if (data[k] > val) val = data[k];
+    }
+    var dbv = val * (90/255) - 130 + S.cal + 30;
+    var y = H * (S.dispTop - dbv) / S.dispRange;
+    if (y < 0) y = 0; if (y > H) y = H;
+    if (x === 0) pctx.moveTo(x, y); else pctx.lineTo(x, y);
+  }
+  pctx.strokeStyle = "#FFD700"; // Dourado
+  pctx.lineWidth = 1.8;
+  pctx.stroke();
+  // banda passante
+  var bpLo, bpHi;
+  if (S.mode === "USB"){ bpLo = S.vfo; bpHi = S.vfo + S.bw; }
+  else if (S.mode === "LSB"){ bpLo = S.vfo - S.bw; bpHi = S.vfo; }
+  else { bpLo = S.vfo - S.bw/2; bpHi = S.vfo + S.bw/2; }
+  var x1 = (bpLo - v.lo) / v.span * W, x2 = (bpHi - v.lo) / v.span * W;
+  pctx.fillStyle = "rgba(120,200,255,.13)";
+  pctx.fillRect(x1, 0, Math.max(x2-x1, 2), H);
+  // linha do VFO
+  var xv = (S.vfo - v.lo) / v.span * W;
+  pctx.strokeStyle = "rgba(255,80,80,.95)";
+  pctx.setLineDash([6,4]);
+  pctx.beginPath(); pctx.moveTo(xv, 0); pctx.lineTo(xv, H); pctx.stroke();
+  pctx.setLineDash([]);
+  // escala de frequencia
+  var st = niceStep(v.span, 6);
+  pctx.fillStyle = "rgba(255,225,120,.95)";
+  pctx.textAlign = "center";
+  for (var f2 = Math.ceil(v.lo/st)*st; f2 <= v.hi; f2 += st){
+    var xx = (f2 - v.lo) / v.span * W;
+    pctx.fillText((f2/1e6).toFixed(st >= 1e6 ? 0 : 3), xx, 14);
+    pctx.fillRect(xx, 18, 1, 5);
+  }
+  pctx.textAlign = "left";
+  // frequencia do VFO no rodape
+  pctx.fillStyle = "#7fd4ff";
+  pctx.textAlign = "center";
+  pctx.fillText(fmtFreq(S.vfo) + " Hz", xv < W/2 ? Math.max(xv, 60) : Math.min(xv, W-60), H - 8);
+  pctx.textAlign = "left";
+}
+
+// ===================== WATERFALL =====================
+var wfLut = [];
+(function(){
+  for (var i = 0; i < 256; i++){
+    var t = i / 255;
+    var r, g, b;
+    // Paleta azul profissional: Preto -> Azul Profundo -> Azul Claro -> Verde -> Amarelo -> Vermelho
+    if (t < 0.5){
+        // 0.0 a 0.5: Preto a Azul Brilhante (Metade da escala e azul)
+        r = 0;
+        g = Math.round(t * 2 * 100);
+        b = Math.round(t * 2 * 255);
+    }
+    else if (t < 0.75){
+        // 0.5 a 0.75: Azul a Verde
+        var u = (t - 0.5) / 0.25;
+        r = 0; g = Math.round(100 + u * 155); b = Math.round(255 * (1 - u));
+    }
+    else if (t < 0.92){
+        // 0.75 a 0.92: Verde a Amarelo
+        var u2 = (t - 0.75) / 0.17;
+        r = Math.round(u2 * 255); g = 255; b = 0;
+    }
+    else {
+        // 0.92 a 1.0: Amarelo a Vermelho/Branco
+        var u3 = (t - 0.92) / 0.08;
+        r = 255; g = Math.round(255 * (1 - u3)); b = Math.round(u3 * 100);
+    }
+    r = Math.max(0, Math.min(255, r));
+    g = Math.max(0, Math.min(255, g));
+    b = Math.max(0, Math.min(255, b));
+    wfLut.push([r,g,b]);
+  }
+})();
+var wfRow = null, wfCount = 0;
+function drawWf(){
+  if (!spec) return;
+  wfCount++;
+  var rows = 1;
+  if (S.wfSpeed === 0.5){ if (wfCount % 2) return; }
+  else rows = S.wfSpeed;
+  var W = wf.width, H = wf.height;
+  var v = viewWindow();
+  wctx.drawImage(wf, 0, 0, W, H-rows, 0, rows, W, H-rows);
+  if (!wfRow || wfRow.width !== W) wfRow = wctx.createImageData(W, 1);
+  var p = wfRow.data;
+  var binHz = S.rate / spec.length;
+  var f0 = S.center - S.rate/2;
+  for (var x = 0; x < W; x++){
+    var f = v.lo + v.span * x / W;
+    var b = Math.floor((f - f0) / binHz);
+    var val = (b >= 0 && b < spec.length) ? spec[b] : 0;
+    // PISO WF agora subtrai diretamente do sinal.
+    // Multiplicador de ganho (2.0) para esticar a escala de cores.
+    var idx = Math.round((val - S.wfContrast) * 2.0);
+    idx = Math.max(0, Math.min(255, idx));
+    var c = wfLut[idx];
+    var i4 = x * 4;
+    p[i4] = c[0]; p[i4+1] = c[1]; p[i4+2] = c[2]; p[i4+3] = 255;
+  }
+  for (var r = 0; r < rows; r++) wctx.putImageData(wfRow, 0, r);
+}
+
+// ===================== TOQUE NO PANADAPTER =====================
+var panTouch = {active:false, x0:0, f0:0, pinch0:0, zoom0:1};
+pan.addEventListener("touchstart", function(ev){
+  ev.preventDefault();
+  if (ev.touches.length === 1){
+    panTouch.active = true;
+    panTouch.x0 = ev.touches[0].clientX;
+    panTouch.f0 = S.vfo;
+  } else if (ev.touches.length === 2){
+    panTouch.active = false;
+    panTouch.pinch0 = Math.abs(ev.touches[0].clientX - ev.touches[1].clientX);
+    panTouch.zoom0 = S.zoom;
+  }
+}, {passive:false});
+pan.addEventListener("touchmove", function(ev){
+  ev.preventDefault();
+  var v = viewWindow();
+  if (ev.touches.length === 1 && panTouch.active){
+    var dx = ev.touches[0].clientX - panTouch.x0;
+    var hzPerPx = v.span / pan.clientWidth;
+    var f = panTouch.f0 + dx * hzPerPx;
+    setVfo(Math.round(f / S.step) * S.step);
+  } else if (ev.touches.length === 2){
+    var d = Math.abs(ev.touches[0].clientX - ev.touches[1].clientX);
+    if (panTouch.pinch0 > 10){
+      var z = panTouch.zoom0 * d / panTouch.pinch0;
+      z = Math.max(1, Math.min(16, z));
+      S.zoom = z >= 8 ? Math.round(z) : Math.round(z*2)/2;
+      $("bZoom").textContent = "ZOOM x" + S.zoom;
+    }
+  }
+}, {passive:false});
+pan.addEventListener("touchend", function(){ panTouch.active = false; saveCfg(); });
+
+var wfTouch = {active:false, x0:0, f0:0, moved:false};
+wf.addEventListener("touchstart", function(ev){
+  ev.preventDefault();
+  wfTouch.active = true;
+  wfTouch.moved = false;
+  wfTouch.x0 = ev.touches[0].clientX;
+  wfTouch.f0 = S.vfo;
+}, {passive:false});
+
+wf.addEventListener("touchmove", function(ev){
+  if (!wfTouch.active) return;
+  ev.preventDefault();
+  var dx = ev.touches[0].clientX - wfTouch.x0;
+  if (Math.abs(dx) > 5) wfTouch.moved = true;
+  var v = viewWindow();
+  var hzPerPx = v.span / wf.clientWidth;
+  // Dedo para a direita -> VFO para a direita (mesmo sentido do espectro)
+  var f = wfTouch.f0 + dx * hzPerPx;
+  setVfo(Math.round(f / S.step) * S.step);
+}, {passive:false});
+
+wf.addEventListener("touchend", function(ev){
+  if (!wfTouch.active) return;
+  if (!wfTouch.moved){
+    // Foi apenas um clique, muda para a freq exata do toque
+    var v = viewWindow();
+    var rect = wf.getBoundingClientRect();
+    var x = wfTouch.x0 - rect.left;
+    var f = v.lo + v.span * (x / rect.width);
+    setVfo(Math.round(f / S.step) * S.step);
+  }
+  wfTouch.active = false;
+}, {passive:false});
+
+// ===================== BOTOES DO PANADAPTER =====================
+var ZOOMS = [1,2,4,8,16];
+$("bZoom").addEventListener("click", function(ev){
+  ev.stopPropagation();
+  openDd(this, ZOOMS.map(function(v){ return {label:"x" + v, value:v}; }), S.zoom, true, function(v){
+    S.zoom = v;
+    $("bZoom").textContent = "ZOOM x" + v;
+    saveCfg();
+  });
+});
+var RANGES = [60,80,90,110];
+$("bRange").addEventListener("click", function(ev){
+  ev.stopPropagation();
+  openDd(this, RANGES.map(function(v){ return {label:v + " dB", value:v}; }), S.dispRange, true, function(v){
+    S.dispRange = v;
+    $("bRange").textContent = "FAIXA " + v + "dB";
+  });
+});
+var WF_SPEEDS = [0.5, 1, 2, 4];
+function wfLabel(){
+  return {0.5:"WF LENTA", 1:"WF NORMAL", 2:"WF RAPIDA", 4:"WF TURBO"}[S.wfSpeed] || "WF NORMAL";
+}
+$("bWf").addEventListener("click", function(ev){
+  ev.stopPropagation();
+  var names = {0.5:"LENTA", 1:"NORMAL", 2:"RAPIDA", 4:"TURBO"};
+  openDd(this, WF_SPEEDS.map(function(v){ return {label:names[v], value:v}; }), S.wfSpeed, true, function(v){
+    S.wfSpeed = v;
+    $("bWf").textContent = wfLabel();
+    saveCfg();
+  });
+});
+$("bAvg").addEventListener("click", function(){
+  S.avg = !S.avg;
+  this.className = S.avg ? "sel" : "";
+  saveCfg();
+});
+$("bManual").addEventListener("click", function(){
+  $("ovManual").className = "overlay show";
+  applyMnFont();
+});
+$("mnClose").addEventListener("click", function(){
+  $("ovManual").className = "overlay";
+});
+// tamanho da letra do manual: botoes A-/A+ e gesto de pinca
+function applyMnFont(){
+  $("mnText").style.fontSize = S.mnFont + "px";
+}
+function setMnFont(px){
+  S.mnFont = Math.max(10, Math.min(30, Math.round(px)));
+  applyMnFont();
+  saveCfg();
+}
+$("mnMinus").addEventListener("click", function(){ setMnFont(S.mnFont - 2); });
+$("mnPlus").addEventListener("click", function(){ setMnFont(S.mnFont + 2); });
+(function(){
+  var pinch0 = 0, font0 = 12;
+  var ov = $("ovManual");
+  ov.addEventListener("touchstart", function(ev){
+    if (ev.touches.length === 2){
+      pinch0 = Math.hypot(ev.touches[0].clientX - ev.touches[1].clientX,
+                          ev.touches[0].clientY - ev.touches[1].clientY);
+      font0 = S.mnFont;
+    }
+  }, {passive:true});
+  ov.addEventListener("touchmove", function(ev){
+    if (ev.touches.length === 2 && pinch0 > 10){
+      ev.preventDefault();
+      var d = Math.hypot(ev.touches[0].clientX - ev.touches[1].clientX,
+                         ev.touches[0].clientY - ev.touches[1].clientY);
+      setMnFont(font0 * d / pinch0);
+    }
+  }, {passive:false});
+})();
+$("bKeep").addEventListener("click", function(){
+  S.keepScreen = !S.keepScreen;
+  this.className = S.keepScreen ? "sel" : "";
+  var a = A(); if (a) a.setKeepScreen(S.keepScreen);
+  saveCfg();
+});
+
+// ===================== S-METER ANALOGICO (mostrador Yaesu) =====================
+function sUnits(dbm){
+  if (dbm <= -127) return "S0";
+  if (dbm <= -73){
+    var s = Math.floor((dbm + 127) / 6);
+    return "S" + Math.max(0, Math.min(9, s));
+  }
+  var over = Math.round(dbm + 73);
+  return "S9+" + over;
+}
+// posicao 0..1 no mostrador: S0..S9 ocupa 0..0.64, S9+60 chega a 0.93
+function smTargetPos(dbm){
+  if (dbm <= -127) return 0;
+  if (dbm <= -73) return (dbm + 127) / 54 * 0.64;
+  return Math.min(1, 0.64 + (dbm + 73) / 60 * 0.29);
+}
+var smPos = 0, smNeedleEl = null;
+function drawLeds(dbm){
+  var leds = $("ledbar").children;
+  var n = leds.length;
+  var lit = Math.round(((Math.max(-127, Math.min(-13, dbm)) + 127) / 114) * n);
+  for (var i = 0; i < n; i++){
+    var col;
+    if (i < lit) col = i < n*0.6 ? "var(--grn)" : (i < n*0.8 ? "var(--yel)" : "var(--red)");
+    else col = "#1c2836";
+    leds[i].style.background = col;
+  }
+}
+(function(){
+  var lb = $("ledbar");
+  for (var i = 0; i < 15; i++) lb.appendChild(document.createElement("i"));
+})();
+function meterLoop(){
+  var tgt = smTargetPos(S.smeter);
+  // balistica vintage: sobe rapido, desce devagar
+  smPos += (tgt - smPos) * (tgt > smPos ? 0.45 : 0.08);
+  if (!smNeedleEl) smNeedleEl = $("smeterNeedle");
+  if (smNeedleEl){
+    var a = (-128.1 + 78.2 * smPos) * Math.PI / 180;
+    smNeedleEl.setAttribute("x2", (406 + 524 * Math.cos(a)).toFixed(1));
+    smNeedleEl.setAttribute("y2", (625 + 524 * Math.sin(a)).toFixed(1));
+  }
+  requestAnimationFrame(meterLoop);
+}
+
+// ===================== RELOGIO UTC =====================
+setInterval(function(){
+  var d = new Date();
+  function z(n){ return (n < 10 ? "0" : "") + n; }
+  $("utc").textContent = z(d.getUTCHours()) + ":" + z(d.getUTCMinutes()) + ":" + z(d.getUTCSeconds());
+}, 1000);
+
+// ===================== CONFIG / DIALOGOS =====================
+$("btnCfg").addEventListener("click", function(){
+  $("cRate").value = String(S.rate);
+  $("cPpm").value = S.ppm;
+  $("cCal").value = S.cal;
+  $("cFps").value = String(S.fps);
+  $("cDirect").value = S.directMode;
+  $("ovCfg").className = "overlay show";
+});
+$("cClose").addEventListener("click", function(){
+  var a = A();
+  var rate = parseInt($("cRate").value);
+  var ppm = parseInt($("cPpm").value) || 0;
+  var cal = parseFloat($("cCal").value);
+  var fps = parseInt($("cFps").value);
+  var direct = $("cDirect").value;
+  if (rate !== S.rate){ S.rate = rate; if (a) a.setSampleRate(rate); }
+  if (ppm !== S.ppm){ S.ppm = ppm; if (a) a.setPpm(ppm); }
+  if (!isNaN(cal) && cal !== S.cal){ S.cal = cal; if (a) a.setCal(cal); }
+  if (fps !== S.fps){ S.fps = fps; if (a) a.setFftFps(fps); }
+  if (direct !== S.directMode){
+      S.directMode = direct;
+      if (a) a.setDirectMode(direct);
+  }
+  saveCfg();
+  $("ovCfg").className = "overlay";
+});
+$("cDriver").addEventListener("click", function(){
+  var a = A(); if (a) a.openDriverStore();
+});
+$("exCancel").addEventListener("click", function(){ $("ovExit").className = "overlay"; });
+$("exOk").addEventListener("click", function(){
+  var a = A(); if (a) a.exitApp(); else $("ovExit").className = "overlay";
+});
+$("drCancel").addEventListener("click", function(){ $("ovDriver").className = "overlay"; });
+$("drOk").addEventListener("click", function(){
+  $("ovDriver").className = "overlay";
+  var a = A(); if (a) a.openDriverStore();
+});
+
+// ===================== INICIALIZACAO =====================
+function init(){
+  loadCfg();
+  buildFreqDisplay();
+  renderFreq();
+  setMode(S.mode, true);
+  setSrc(S.src);
+  $("addr").value = S.addr;
+  $("btnBw").textContent = "BW " + fmtBw(S.bw);
+  $("btnStep").textContent = "STEP " + fmtStep(S.step);
+  $("tuneLbl").textContent = "SINTONIA (STEP " + fmtStep(S.step) + ")";
+  $("rVol").value = S.vol; $("vVol").textContent = S.vol + "%";
+  $("rSq").value = S.sq; $("vSq").textContent = (S.sq <= -150) ? "OFF" : (S.sq + "dB");
+  $("rGain").value = S.gain; $("vGain").textContent = (S.gain/10).toFixed(1) + "dB";
+  $("bAgc").className = "tgl" + (S.agc ? " sel" : "");
+  $("rWfC").value = S.wfContrast; $("vWfC").textContent = S.wfContrast;
+  $("rNr").value = S.nr; $("vNr").textContent = S.nr === 0 ? "OFF" : (S.nr + "%");
+  $("bZoom").textContent = "ZOOM x" + S.zoom;
+  if (WF_SPEEDS.indexOf(S.wfSpeed) < 0) S.wfSpeed = 2;
+  $("bRange").textContent = "FAIXA " + S.dispRange + "dB";
+  $("bWf").textContent = wfLabel();
+  $("bAvg").className = S.avg ? "sel" : "";
+  $("bKeep").className = S.keepScreen ? "sel" : "";
+  (function(){ var a = A(); if (a) a.setKeepScreen(S.keepScreen); })();
+  sizeCanvases();
+  renderNight();
+  meterLoop();
+  // desenha panadapter vazio
+  spec = new Uint8Array(2048);
+  drawPan();
+  spec = null;
+}
+window.addEventListener("load", init);
+</script>
+</body>
+</html>

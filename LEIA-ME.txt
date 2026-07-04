@@ -1,0 +1,54 @@
+============================================================
+ RXSDR-APP v1.0 - Receptor SDR para Android (RX apenas)
+ por PU1XTB - 73!
+============================================================
+
+O QUE E
+-------
+Receptor SDR nativo para Android, inspirado no visual de apps
+de radio remota. Todo o processamento (espectro, waterfall,
+demodulacao e audio) roda no proprio celular.
+
+Fontes de sinal:
+ - USB: dongle RTL-SDR ligado no celular via cabo OTG, usando o
+   app gratuito "RTL-SDR driver" (marto.rtl_tcp_andro). O RXSDR-APP
+   abre o driver sozinho e oferece instalar se nao estiver presente.
+ - TCP: qualquer servidor rtl_tcp na rede (PC, Raspberry, TV box).
+   Ex.: rtl_tcp -a 0.0.0.0 -s 1024000
+
+Modos: AM, USB, LSB, CW, NFM, WFM (radio FM)
+Recursos: panadapter com mapa-mundi e greyline, waterfall,
+S-meter analogico + dBm, squelch, AGC, ganho RF, zoom por pinca,
+arrastar para sintonizar, VFO A/B, passo configuravel,
+amostragem direta automatica abaixo de 24 MHz (para HF).
+
+COMO COMPILAR (primeira vez)
+----------------------------
+1) Abra o Android Studio > Open > escolha esta pasta (C:\RXSDRAPP)
+   Espere o Gradle sincronizar (baixa o SDK/dependencias sozinho).
+2) Feche o Android Studio.
+3) Rode: GERAR_KEYSTORE.bat  (cria a chave de assinatura - so 1 vez)
+4) Rode: COMPILAR_APK.bat    (gera RXSDR-APP.apk para instalar/testar)
+5) Rode: GERAR_AAB.bat       (gera RXSDR-APP.aab para a Play Store)
+
+Nas proximas vezes, so os .bat ja bastam (nao precisa abrir o Studio).
+
+IMPORTANTE - KEYSTORE
+---------------------
+Os arquivos rxsdrapp.keystore e keystore.properties sao a sua
+identidade na Play Store. Faca backup! NAO distribua junto com o
+codigo no GitHub (ja estao no .gitignore).
+
+COMO USAR NO CELULAR
+--------------------
+USB: conecte o dongle no OTG > escolha USB > botao ligar.
+TCP: escolha TCP > digite IP:porta do servidor > botao ligar.
+Arraste o espectro para sintonizar, toque nos digitos da
+frequencia (metade de cima soma, de baixo subtrai), pinca para
+zoom, toque no waterfall para pular para a frequencia.
+
+ARQUIVOS DO PROJETO
+-------------------
+app/src/main/assets/index.html  -> toda a interface (HTML/JS)
+app/src/main/java/...           -> Kotlin (DSP, rtl_tcp, audio)
+app/src/main/assets/worldmap.png-> mapa de fundo do panadapter
