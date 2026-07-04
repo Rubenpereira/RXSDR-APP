@@ -13,6 +13,63 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 html,body{background:var(--bg);color:var(--txt);font-family:'Roboto Mono','Courier New',monospace;height:100%;overflow-x:hidden}
 body{display:flex;flex-direction:column;min-height:100%;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+
+/* Layout TV / Projetor (Horizontal) */
+body.tv-layout {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+#mainContainer {
+  display: none;
+}
+body.tv-layout #mainContainer {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+body.tv-layout #leftPane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  border-right: 1px solid var(--line);
+  padding: 10px;
+  gap: 10px;
+}
+body.tv-layout #rightPane {
+  flex: 1.2;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 10px;
+  gap: 10px;
+}
+.layout-btn {
+  background: var(--panel2);
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  padding: 20px 10px;
+  color: var(--txt);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s ease-in-out;
+  width: 100%;
+}
+.layout-btn:hover {
+  border-color: var(--acc);
+  background: #182432;
+  transform: translateY(-2px);
+}
+.layout-btn:active {
+  transform: translateY(1px);
+}
+
 .hdr{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--panel2);border-bottom:1px solid var(--line)}
 .dot{width:10px;height:10px;border-radius:50%;background:#555;flex:none}
 .dot.on{background:var(--grn);box-shadow:0 0 8px var(--grn)}
@@ -129,7 +186,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
   <button class="iconbtn" id="btnCfg">&#9881;</button>
 </div>
 
-<div class="row2">
+<div class="row2" id="row2">
   <span class="badge" id="rxBadge">RX</span>
   <div class="src">
     <button id="srcUsb">USB</button>
@@ -138,7 +195,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
   <input id="addr" placeholder="192.168.1.10:1234" value="192.168.1.10:1234">
 </div>
 
-<div class="vfo">
+<div class="vfo" id="vfo">
   <div style="display:flex; align-items:center; gap:8px">
     <button class="iconbtn" id="btnPower" style="width:50px; height:50px; font-size:13px; flex:none">OFF</button>
     <div style="flex:1">
@@ -164,7 +221,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
   </div>
 </div>
 
-<div class="grid2">
+<div class="grid2" id="grid2">
   <div class="panel">
     <h3>S-METER</h3>
     <div class="smeter-yaesu">
@@ -187,18 +244,18 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 </div>
 
 <div class="tlabel" id="tuneLbl">SINTONIA (STEP 100 kHz)</div>
-<div class="tune">
+<div class="tune" id="tune">
   <button id="tDown">&#9664;</button>
   <input type="range" id="tSlider" min="0" max="1000" value="500">
   <button id="tUp">&#9654;</button>
 </div>
 
-<div style="background:#000; border-top:1px solid var(--line); border-bottom:1px solid var(--line)">
+<div id="canvasWrapper" style="background:#000; border-top:1px solid var(--line); border-bottom:1px solid var(--line)">
   <canvas id="pan" height="90"></canvas>
   <canvas id="wf" height="200"></canvas>
 </div>
 
-<div class="panbtns">
+<div class="panbtns" id="panbtns">
   <button id="bZoom">ZOOM x1</button>
   <button id="bRange">FAIXA 60dB</button>
   <button id="bWf">WF x1</button>
@@ -207,7 +264,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
   <button id="bManual">MANUAL</button>
 </div>
 
-<div class="ctl">
+<div class="ctl" id="ctl">
   <div class="cr">
     <span class="n">VOLUME</span>
     <input type="range" id="rVol" min="0" max="300" value="180">
@@ -236,6 +293,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
   </div>
 </div>
 
+<div id="mainContainer">
+  <div id="leftPane"></div>
+  <div id="rightPane"></div>
+</div>
+
 
 
 <!-- Config -->
@@ -255,6 +317,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
         <option value="AUTO">AUTO (<24MHz)</option>
         <option value="ON">FOR&Ccedil;AR ON (Modo Q)</option>
         <option value="OFF">FOR&Ccedil;AR OFF</option>
+      </select>
+    </div>
+    <div class="cr"><span class="n">Modo de Tela</span>
+      <select id="cLayout">
+        <option value="MOBILE">Celular (Vertical)</option>
+        <option value="TV">TV / Projetor (Horizontal)</option>
       </select>
     </div>
     <div class="cr"><span class="n">Driver USB</span><button class="tgl" id="cDriver" style="border-color:var(--acc);color:var(--acc)">Instalar driver RTL-SDR</button></div>
@@ -285,6 +353,28 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     <div class="btns">
       <button id="drCancel">CANCELAR</button>
       <button class="pri" id="drOk">INSTALAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- Seleção de Layout -->
+<div class="overlay" id="ovLayout">
+  <div class="modal" style="text-align:center; max-width:92vw; width:450px;">
+    <h2 style="font-size:18px; margin-bottom:15px; color:var(--acc);">Modo de Tela</h2>
+    <p style="font-size:13px; margin-bottom:20px; color:var(--txt);">
+      Selecione o layout ideal para o seu dispositivo. Você pode alterar esta opção a qualquer momento nas configurações (ícone da engrenagem).
+    </p>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:15px;">
+      <button id="btnLayoutMobile" class="layout-btn">
+        <span style="font-size:32px;">📱</span>
+        <strong style="color:var(--acc); font-size:14px;">Modo Celular</strong>
+        <span style="font-size:11px; color:var(--dim); line-height:1.3;">Layout vertical clássico para smartphones</span>
+      </button>
+      <button id="btnLayoutTV" class="layout-btn">
+        <span style="font-size:32px;">📺</span>
+        <strong style="color:var(--acc); font-size:14px;">Modo TV / Projetor</strong>
+        <span style="font-size:11px; color:var(--dim); line-height:1.3;">Layout horizontal otimizado para TVs e TV Boxes</span>
+      </button>
     </div>
   </div>
 </div>
@@ -493,7 +583,8 @@ var S = {
   directMode: "AUTO", // "AUTO", "ON", "OFF"
   src: "TCP", addr: "192.168.1.10:1234",
   connected: false, connecting: false,
-  smeter: -130, sqOpen: true
+  smeter: -130, sqOpen: true,
+  layoutMode: "" // vazio força a seleção no primeiro início
 };
 var BW_OPTS = {
   AM:  [4000,6000,8000,10000],
@@ -518,7 +609,8 @@ function saveCfg(){
       gain:S.gain, agc:S.agc, cal:S.cal, ppm:S.ppm, fps:S.fps,
       wfContrast:S.wfContrast, directMode:S.directMode, nr:S.nr, defv14:true, defv18:true,
       activeName:S.activeName, keepScreen:S.keepScreen, defv19:true, mnFont:S.mnFont,
-      src:S.src, addr:S.addr, rate:S.rate, avg:S.avg
+      src:S.src, addr:S.addr, rate:S.rate, avg:S.avg,
+      layoutMode:S.layoutMode
     }));
   }catch(e){}
 }
@@ -947,11 +1039,19 @@ nightCv.width = 360; nightCv.height = 180;
 var lastNight = 0;
 
 function sizeCanvases(){
-  var w = document.body.clientWidth;
+  var parentW = (pan.parentNode && pan.parentNode.clientWidth) || document.body.clientWidth;
+  if (parentW <= 0) parentW = document.body.clientWidth;
   var dpr = Math.min(window.devicePixelRatio || 1, 2);
-  pan.width = Math.round(w * dpr); pan.height = Math.round(90 * dpr);
-  wf.width = Math.round(w * dpr); wf.height = Math.round(200 * dpr);
-  pan.style.height = "90px"; wf.style.height = "200px";
+  pan.width = Math.round(parentW * dpr);
+  wf.width = Math.round(parentW * dpr);
+  
+  var panH = 90;
+  var wfH = 200;
+  
+  pan.height = Math.round(panH * dpr);
+  wf.height = Math.round(wfH * dpr);
+  pan.style.height = panH + "px";
+  wf.style.height = wfH + "px";
 }
 window.addEventListener("resize", sizeCanvases);
 
@@ -1350,12 +1450,67 @@ setInterval(function(){
 }, 1000);
 
 // ===================== CONFIG / DIALOGOS =====================
+function applyLayoutMode(mode){
+  if (!mode) mode = "MOBILE";
+  S.layoutMode = mode;
+  var mc = $("mainContainer");
+  var lp = $("leftPane");
+  var rp = $("rightPane");
+  var body = document.body;
+  
+  if (mode === "TV"){
+    body.classList.add("tv-layout");
+    mc.style.display = "flex";
+    
+    lp.appendChild($("row2"));
+    lp.appendChild($("vfo"));
+    lp.appendChild($("grid2"));
+    lp.appendChild($("ctl"));
+    
+    rp.appendChild($("canvasWrapper"));
+    rp.appendChild($("panbtns"));
+    rp.appendChild($("tuneLbl"));
+    rp.appendChild($("tune"));
+  } else {
+    body.classList.remove("tv-layout");
+    mc.style.display = "none";
+    
+    body.insertBefore($("row2"), mc);
+    body.insertBefore($("vfo"), mc);
+    body.insertBefore($("grid2"), mc);
+    body.insertBefore($("tuneLbl"), mc);
+    body.insertBefore($("tune"), mc);
+    body.insertBefore($("canvasWrapper"), mc);
+    body.insertBefore($("panbtns"), mc);
+    body.insertBefore($("ctl"), mc);
+  }
+  
+  var cLay = $("cLayout");
+  if (cLay) cLay.value = mode;
+  
+  sizeCanvases();
+  setTimeout(sizeCanvases, 20);
+  setTimeout(sizeCanvases, 100);
+}
+
+$("btnLayoutMobile").addEventListener("click", function(){
+  applyLayoutMode("MOBILE");
+  saveCfg();
+  $("ovLayout").className = "overlay";
+});
+$("btnLayoutTV").addEventListener("click", function(){
+  applyLayoutMode("TV");
+  saveCfg();
+  $("ovLayout").className = "overlay";
+});
+
 $("btnCfg").addEventListener("click", function(){
   $("cRate").value = String(S.rate);
   $("cPpm").value = S.ppm;
   $("cCal").value = S.cal;
   $("cFps").value = String(S.fps);
   $("cDirect").value = S.directMode;
+  $("cLayout").value = S.layoutMode || "MOBILE";
   $("ovCfg").className = "overlay show";
 });
 $("cClose").addEventListener("click", function(){
@@ -1365,6 +1520,7 @@ $("cClose").addEventListener("click", function(){
   var cal = parseFloat($("cCal").value);
   var fps = parseInt($("cFps").value);
   var direct = $("cDirect").value;
+  var layout = $("cLayout").value;
   if (rate !== S.rate){ S.rate = rate; if (a) a.setSampleRate(rate); }
   if (ppm !== S.ppm){ S.ppm = ppm; if (a) a.setPpm(ppm); }
   if (!isNaN(cal) && cal !== S.cal){ S.cal = cal; if (a) a.setCal(cal); }
@@ -1372,6 +1528,9 @@ $("cClose").addEventListener("click", function(){
   if (direct !== S.directMode){
       S.directMode = direct;
       if (a) a.setDirectMode(direct);
+  }
+  if (layout !== S.layoutMode){
+      applyLayoutMode(layout);
   }
   saveCfg();
   $("ovCfg").className = "overlay";
@@ -1392,6 +1551,11 @@ $("drOk").addEventListener("click", function(){
 // ===================== INICIALIZACAO =====================
 function init(){
   loadCfg();
+  if (!S.layoutMode) {
+    $("ovLayout").className = "overlay show";
+  } else {
+    applyLayoutMode(S.layoutMode);
+  }
   buildFreqDisplay();
   renderFreq();
   setMode(S.mode, true);
