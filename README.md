@@ -24,7 +24,8 @@ cachoeira, demodulacao e audio.
 
 ## Instalacao (usuarios)
 
-1. Baixe o **[RXSDR-APP.apk](RXSDR-APP.apk)** e instale (permita "fontes desconhecidas").
+1. **[>> BAIXAR O RXSDR-APP.apk <<](https://github.com/Rubenpereira/RXSDR-APP/raw/main/RXSDR-APP.apk)**
+   (toque no link acima pelo celular, instale e permita "fontes desconhecidas").
 2. **USB**: ligue o dongle RTL-SDR no cabo OTG. O app pede para instalar o driver gratuito
    ["RTL-SDR driver"](https://play.google.com/store/apps/details?id=marto.rtl_tcp_andro)
    na primeira vez. Escolha **USB** e aperte **ON**.
