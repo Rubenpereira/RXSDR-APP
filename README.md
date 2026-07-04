@@ -7,6 +7,8 @@ Conecta a um dongle **RTL-SDR pelo USB (cabo OTG)** ou a um servidor **rtl_tcp p
 (PC, Raspberry Pi, TV Box) e faz todo o processamento no proprio aparelho: espectro,
 cachoeira, demodulacao e audio.
 
+![Interface do RXSDR-APP](RXSDR-APP.jpeg)
+
 ## Recursos
 
 - Modos: **AM, USB, LSB, CW, NFM e WFM** (radio FM)
