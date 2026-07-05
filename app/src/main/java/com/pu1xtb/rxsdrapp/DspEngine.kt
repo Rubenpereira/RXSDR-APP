@@ -19,6 +19,7 @@ class DspEngine(private val ui: Ui) {
 
     interface Ui {
         fun onSpectrum(bins: ByteArray, centerHz: Long, sampleRate: Int, vfoHz: Long)
+        fun onDmrAudio(samples: FloatArray, len: Int)
     }
 
     companion object {
@@ -330,7 +331,7 @@ class DspEngine(private val ui: Ui) {
                     amDc = dc
                     applyAgc(audioN)
                 }
-                "NFM" -> {
+                "NFM", "DMR" -> {
                     var pi2 = prevI; var pq2 = prevQ
                     for (k in 0 until n2) {
                         val ci = chI[k]; val cq = chQ[k]
@@ -362,6 +363,11 @@ class DspEngine(private val ui: Ui) {
             }
         }
 
+        if (mode == "DMR") {
+            // Feed raw discriminator audio to DMR decoder before NR or Squelch
+            ui.onDmrAudio(audioBuf, audioN)
+        }
+
         // ----- reducao de ruido (HF: AM/SSB/CW/NFM) -----
         if (!isWfm && nrLevel > 0.01f) {
             nr.level = nrLevel
@@ -376,6 +382,15 @@ class DspEngine(private val ui: Ui) {
         squelchOpen = sqOpen
         if (!sqOpen) java.util.Arrays.fill(audioBuf, 0, audioN, 0f)
 
+        if (mode == "DMR") {
+            // CORRECAO DO AUDIO PICOTADO: em modo DMR quem escreve no AudioTrack
+            // e o DmrManager (voz decodificada do dsd-fme). Antes, este ponto
+            // escrevia silencio continuo na taxa em tempo real do SDR no MESMO
+            // AudioTrack; o buffer enchia so com o silencio e a voz era
+            // intercalada/descartada (WRITE_NON_BLOCKING) -> voz sempre picotada.
+            // O AudioTrack ja fica mudo sozinho quando nao recebe dados.
+            return
+        }
         audio.write(audioBuf, audioN, volume)
     }
 

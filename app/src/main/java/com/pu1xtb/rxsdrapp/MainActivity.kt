@@ -51,6 +51,9 @@ class MainActivity : Activity() {
                 val b64 = Base64.encodeToString(bins, Base64.NO_WRAP)
                 js("onSpec('" + b64 + "'," + centerHz + "," + sampleRate + "," + vfoHz + ")")
             }
+            override fun onDmrAudio(samples: FloatArray, len: Int) {
+                dmr?.feedAudio(samples, len)
+            }
         })
 
         web = WebView(this)
@@ -214,7 +217,29 @@ class MainActivity : Activity() {
         }
     }
 
+    private var dmr: DmrManager? = null
+    private var dmrInverted = false
+
+    private fun startDmr(inverted: Boolean = dmrInverted) {
+        if (dmr != null) return
+        dmrInverted = inverted
+        val manager = DmrManager(this, engine.audio) { jsonState ->
+            runOnUiThread {
+                web.evaluateJavascript("DmrDecoder.updateSlots(${JSONObject.quote(jsonState)})", null)
+            }
+        }
+        manager.inverted = inverted
+        dmr = manager
+        manager.start()
+    }
+
+    private fun stopDmr() {
+        dmr?.stop()
+        dmr = null
+    }
+
     private fun doDisconnect() {
+        stopDmr()
         client?.close()
         client = null
         engine.stop()
@@ -308,8 +333,20 @@ class MainActivity : Activity() {
 
         @JavascriptInterface
         fun setMode(m: String) {
+            val oldMode = engine.mode
             engine.mode = m
             engine.markDirty()
+            handler.post {
+                if (m == "DMR") {
+                    if (oldMode != "DMR") {
+                        startDmr()
+                    }
+                } else {
+                    if (oldMode == "DMR") {
+                        stopDmr()
+                    }
+                }
+            }
         }
 
         @JavascriptInterface
@@ -392,6 +429,39 @@ class MainActivity : Activity() {
                 }
             }
         }
+
+        @JavascriptInterface
+        fun setDmrPolarity(inverted: Boolean) {
+            handler.post {
+                dmrInverted = inverted
+                if (dmr != null) {
+                    stopDmr()
+                    startDmr(inverted)
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun setDmrPcmHz(hz: Int) {
+            handler.post {
+                dmr?.pcmHz = hz
+            }
+        }
+
+        @JavascriptInterface
+        fun setDmrListenMode(mode: String) {
+            handler.post {
+                dmr?.listenMode = mode
+            }
+        }
+
+        @JavascriptInterface
+        fun setDmrLogEnabled(enabled: Boolean) {
+            handler.post {
+                dmr?.logEnabled = enabled
+            }
+        }
+
 
         @JavascriptInterface
         fun exitApp() {

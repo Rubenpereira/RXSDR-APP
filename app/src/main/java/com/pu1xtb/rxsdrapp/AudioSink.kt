@@ -19,7 +19,10 @@ class AudioSink(private val sampleRate: Int = 32000) {
         val minBuf = AudioTrack.getMinBufferSize(
             sampleRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT
         )
-        val bufSize = maxOf(minBuf * 3, 16384)
+        // Buffer maior: capacidade extra nao aumenta a latencia do audio
+        // analogico (o nivel de enchimento e que manda), mas da folga para as
+        // rajadas de voz DMR do dsd-fme sem descartar amostras (picote).
+        val bufSize = maxOf(minBuf * 4, 65536)
         track = AudioTrack(
             AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -35,6 +38,7 @@ class AudioSink(private val sampleRate: Int = 32000) {
         track?.play()
     }
 
+    @Synchronized
     fun write(samples: FloatArray, len: Int, volume: Float) {
         val t = track ?: return
         if (pcm.size < len) pcm = ShortArray(len)
@@ -46,7 +50,13 @@ class AudioSink(private val sampleRate: Int = 32000) {
             pcm[i] = (v * 32600f).toInt().toShort()
         }
         if (len > 0) level = sqrt(sumSq / len)
-        t.write(pcm, 0, len)
+        // WRITE_NON_BLOCKING: se o AudioTrack momentaneamente nao consegue drenar
+        // (troca de rota de audio, foco, hiccup do HAL), essa chamada NAO trava.
+        // Isso e essencial no caminho do DMR: quem chama write() aqui e a mesma
+        // thread que le os pacotes UDP do dsd-fme - se ela travar mesmo que por
+        // pouco tempo, o buffer UDP do SO enche e derruba pacotes = audio picotado.
+        // Um pequeno corte ocasional de amostra e muito melhor que travar a thread.
+        t.write(pcm, 0, len, AudioTrack.WRITE_NON_BLOCKING)
     }
 
     fun stop() {

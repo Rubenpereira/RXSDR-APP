@@ -1,0 +1,11 @@
+#ifndef FAKE_SYS_SOUNDCARD_H
+#define FAKE_SYS_SOUNDCARD_H
+
+#define SNDCTL_DSP_SETFMT   0
+#define SNDCTL_DSP_CHANNELS 1
+#define SNDCTL_DSP_SPEED    2
+#define AFMT_S16_LE         3
+#define SNDCTL_DSP_RESET    4
+#define SNDCTL_DSP_STEREO   5
+
+#endif

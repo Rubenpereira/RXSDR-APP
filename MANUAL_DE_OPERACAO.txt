@@ -10,7 +10,8 @@ inteiramente no celular. Ele recebe as amostras de RF de um
 dongle RTL-SDR e faz todo o processamento no aparelho:
 espectro, cachoeira, demodulacao e audio.
 
-Modos de recepcao: AM, USB, LSB, CW, NFM e WFM (radio FM).
+Modos de recepcao: AM, USB, LSB, CW, NFM e WFM (radio FM),
+alem de voz digital DMR (botao DMR - ver secao 12).
 Cobertura tipica do dongle: 24 MHz a 1,7 GHz, e abaixo de
 24 MHz (HF) por amostragem direta automatica (dongles v3 ou
 modificados).
@@ -132,7 +133,31 @@ Botoes (moldura laranja):
 Frequencias abaixo de 24 MHz ativam automaticamente a
 amostragem direta (ramo Q) - requer dongle v3 ou modificado.
 
-12. AUDIO EM SEGUNDO PLANO
+12. DECODIFICADOR DMR (VOZ DIGITAL)
+-----------------------------------
+Toque no botao DMR (verde) para abrir o decodificador de voz
+digital DMR. O radio muda sozinho para NFM 12.5 kHz; basta
+sintonizar a frequencia DMR desejada.
+
+- JANELA FLUTUANTE: a janela do DMR e pequena e o radio
+  continua visivel e funcionando atras dela - da para trocar
+  frequencia e usar os botoes sem fechar o DMR.
+- ARRASTAR: segure na barra do titulo (onde esta escrito
+  DMR) e arraste a janela para qualquer canto da tela.
+- REDIMENSIONAR: arraste a alca do canto inferior direito
+  da janela para mudar o tamanho. Se ficar pequena, o
+  conteudo ganha rolagem interna.
+- OUVIR: escolha TS1 e TS2 (ambos os time-slots), So TS1
+  ou So TS2.
+- TIME-SLOTS: cada painel mostra Estado (led verde = ativo),
+  Tipo (Grupo/Privado/Voz/Dados), Origem (ID de quem fala),
+  Destino (talkgroup ou ID chamado) e o contador de frames
+  de voz (V) e dados (D).
+- NORMAL / INVERTIDO: polaridade do sinal 4FSK. Se o slot
+  acende mas a voz nao sai, experimente Invertido.
+- FECHAR: encerra o decodificador e devolve o modo anterior.
+
+13. AUDIO EM SEGUNDO PLANO
 --------------------------
 Com o radio ligado, o app mantem um servico ativo que segura
 o Wi-Fi e a CPU: pode apagar a tela ou trocar de app que o
@@ -142,7 +167,7 @@ Se o audio parar com a tela apagada em celulares com economia
 de bateria agressiva (Xiaomi, Samsung...), libere o RXSDR-APP
 na otimizacao de bateria do aparelho.
 
-13. DICAS RAPIDAS
+14. DICAS RAPIDAS
 -----------------
 - Cachoeira toda vermelha? Reduza o GANHO RF ou suba o PISO WF.
 - Nada se ouve? Veja o SQL (squelch pode estar fechado) e o

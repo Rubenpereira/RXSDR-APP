@@ -26,6 +26,7 @@
         android:banner="@drawable/tv_banner"
         android:usesCleartextTraffic="true"
         android:hardwareAccelerated="true"
+        android:extractNativeLibs="true"
         android:allowBackup="true">
 
         <activity

@@ -165,6 +165,38 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 .modal .btns button.pri{border-color:var(--acc);color:var(--acc)}
 .modal p{font-size:12px;color:var(--dim);line-height:1.5;user-select:text;-webkit-user-select:text}
 
+/* DMR Panel */
+.dmr-overlay{position:fixed;left:8px;top:64px;width:min(340px,92vw);max-height:82vh;background:rgba(2,10,18,.96);border:1px solid #2a5a8a;border-radius:10px;box-shadow:0 10px 34px rgba(0,0,0,.65);display:none;z-index:55;flex-direction:column;overflow:hidden}
+.dmr-overlay.show{display:flex}
+.dmr-hdr{cursor:move;touch-action:none;user-select:none;-webkit-user-select:none}
+.dmr-scroll{flex:1 1 auto;min-height:0;overflow-y:auto}
+.dmr-grip{position:absolute;right:0;bottom:0;width:28px;height:28px;cursor:nwse-resize;touch-action:none;z-index:3;color:#4a7aaa;font-size:15px;line-height:28px;text-align:center;user-select:none;-webkit-user-select:none}
+.dmr-hdr{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#020a12;border-bottom:1px solid #1a3a5a;flex-shrink:0}
+.dmr-hdr .dmr-title{flex:1;color:#90caf9;font-size:14px;font-weight:bold;font-family:sans-serif}
+.dmr-hdr .dmr-close{background:#1a0a0a;border:1px solid #5a1a1a;border-radius:8px;color:#ef5350;font-family:inherit;font-size:12px;padding:6px 14px;cursor:pointer}
+.dmr-status{padding:8px 12px;background:#020a12;border-bottom:1px solid #1a3a5a;flex-shrink:0}
+.dmr-status .dmr-main-title{color:#90caf9;font-family:sans-serif;font-size:13px;font-weight:bold;margin-bottom:3px}
+.dmr-status .dmr-signal{color:#81c784;font-family:sans-serif;font-size:11px}
+.dmr-slots{display:flex;gap:8px;padding:10px 12px;background:#01060a;flex-shrink:0}
+.dmr-slot{flex:1;border:1px solid #1b5e20;background:#011105;border-radius:6px;padding:8px;font-family:sans-serif}
+.dmr-slot .slot-title{color:#4caf50;font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+.dmr-slot .slot-row{font-size:11px;line-height:1.6;color:#a5d6a7}
+.dmr-slot .slot-row span{color:#fff;font-weight:500}
+.dmr-slot .slot-led{display:inline-block;width:8px;height:8px;border-radius:50%;background:#757575;margin-right:5px;vertical-align:middle;transition:all 0.3s}
+.dmr-slot .slot-led.on{background:#4caf50;box-shadow:0 0 8px #4caf50}
+.dmr-slot .slot-stats{margin-top:6px;border-top:1px solid rgba(76,175,80,0.15);padding-top:5px;font-size:9px;color:#81c784}
+.dmr-listen{display:flex;gap:12px;align-items:center;padding:6px 12px;background:#010c15;border-bottom:1px solid #1a3a5a;font-family:sans-serif;font-size:11px;color:#b0bec5;flex-shrink:0}
+.dmr-listen label{display:flex;align-items:center;gap:4px;cursor:pointer}
+.dmr-listen input{accent-color:#64b5f6}
+.dmr-body{flex:1;display:flex;flex-direction:column;padding:10px 12px;background:#01060a;min-height:0;overflow:hidden}
+.dmr-log-box{flex:1;background:#000;border:1px solid #1a3a5a;border-radius:6px;margin-top:8px;padding:6px;font-family:monospace;font-size:10px;color:#4caf50;overflow-y:auto;white-space:pre-wrap;display:flex;flex-direction:column;user-select:text;-webkit-user-select:text}
+.dmr-log-box *{user-select:text !important;-webkit-user-select:text !important}
+.dmr-body .dmr-info{font-size:11px;color:#546e7a;font-family:sans-serif;line-height:1.6}
+.dmr-footer{display:flex;gap:8px;padding:8px 12px;background:#01060a;border-top:1px solid #1a3a5a;flex-shrink:0}
+.dmr-footer button{flex:1;padding:8px;border-radius:6px;font-family:inherit;font-size:12px;font-weight:bold;cursor:pointer;transition:all 0.2s}
+.dmr-btn-normal{background:#2e7d32;border:1px solid #66bb6a;color:#fff;box-shadow:0 0 10px rgba(102,187,106,0.4)}
+.dmr-btn-inverted{background:#051a0b;border:1px solid #1e6c33;color:#40dd70}
+
 /* Teclado Numerico */
 .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
 .keypad button{background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--txt);font-family:inherit;font-size:18px;padding:15px;touch-action:manipulation}
@@ -216,6 +248,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     <button data-m="CW">CW</button>
     <button data-m="NFM">NFM</button>
     <button data-m="WFM" class="sel">WFM</button>
+    <button id="btnDmr" style="background:#0a2810;border:1px solid #2e7d32;color:#4caf50;font-weight:bold">DMR</button>
     <button class="pill" id="btnBw">BW 180k</button>
     <button class="pill" id="btnStep">STEP 100k</button>
   </div>
@@ -416,7 +449,8 @@ inteiramente no celular. Ele recebe as amostras de RF de um
 dongle RTL-SDR e faz todo o processamento no aparelho:
 espectro, cachoeira, demodulacao e audio.
 
-Modos de recepcao: AM, USB, LSB, CW, NFM e WFM (radio FM).
+Modos de recepcao: AM, USB, LSB, CW, NFM e WFM (radio FM),
+alem de voz digital DMR (botao DMR - ver secao 12).
 Cobertura tipica do dongle: 24 MHz a 1,7 GHz, e abaixo de
 24 MHz (HF) por amostragem direta automatica (dongles v3 ou
 modificados).
@@ -538,7 +572,31 @@ Botoes (moldura laranja):
 Frequencias abaixo de 24 MHz ativam automaticamente a
 amostragem direta (ramo Q) - requer dongle v3 ou modificado.
 
-12. AUDIO EM SEGUNDO PLANO
+12. DECODIFICADOR DMR (VOZ DIGITAL)
+-----------------------------------
+Toque no botao DMR (verde) para abrir o decodificador de voz
+digital DMR. O radio muda sozinho para NFM 12.5 kHz; basta
+sintonizar a frequencia DMR desejada.
+
+- JANELA FLUTUANTE: a janela do DMR e pequena e o radio
+  continua visivel e funcionando atras dela - da para trocar
+  frequencia e usar os botoes sem fechar o DMR.
+- ARRASTAR: segure na barra do titulo (onde esta escrito
+  DMR) e arraste a janela para qualquer canto da tela.
+- REDIMENSIONAR: arraste a alca do canto inferior direito
+  da janela para mudar o tamanho. Se ficar pequena, o
+  conteudo ganha rolagem interna.
+- OUVIR: escolha TS1 e TS2 (ambos os time-slots), So TS1
+  ou So TS2.
+- TIME-SLOTS: cada painel mostra Estado (led verde = ativo),
+  Tipo (Grupo/Privado/Voz/Dados), Origem (ID de quem fala),
+  Destino (talkgroup ou ID chamado) e o contador de frames
+  de voz (V) e dados (D).
+- NORMAL / INVERTIDO: polaridade do sinal 4FSK. Se o slot
+  acende mas a voz nao sai, experimente Invertido.
+- FECHAR: encerra o decodificador e devolve o modo anterior.
+
+13. AUDIO EM SEGUNDO PLANO
 --------------------------
 Com o radio ligado, o app mantem um servico ativo que segura
 o Wi-Fi e a CPU: pode apagar a tela ou trocar de app que o
@@ -548,7 +606,7 @@ Se o audio parar com a tela apagada em celulares com economia
 de bateria agressiva (Xiaomi, Samsung...), libere o RXSDR-APP
 na otimizacao de bateria do aparelho.
 
-13. DICAS RAPIDAS
+14. DICAS RAPIDAS
 -----------------
 - Cachoeira toda vermelha? Reduza o GANHO RF ou suba o PISO WF.
 - Nada se ouve? Veja o SQL (squelch pode estar fechado) e o
@@ -563,6 +621,49 @@ na otimizacao de bateria do aparelho.
 </pre>
     <div class="btns"><button class="pri" id="mnClose">FECHAR</button></div>
   </div>
+</div>
+
+<!-- DMR Panel (janela flutuante: arraste pela barra do titulo, redimensione pelo canto) -->
+<div class="dmr-overlay" id="ovDmr">
+  <div class="dmr-hdr" id="dmrDragBar">
+    <span class="dmr-title">&#128251; DMR</span>
+    <button class="dmr-close" id="dmrClose">FECHAR</button>
+  </div>
+  <div class="dmr-scroll">
+    <div class="dmr-status">
+      <div class="dmr-main-title" id="dmrMainTitle">Decodificador DMR &mdash; pronto</div>
+      <div class="dmr-signal" id="dmrSignal">DMR: aguardando sinal 4FSK @ 4800 baud (BW 12.5 kHz, NFM)</div>
+    </div>
+    <div class="dmr-listen">
+      <span>Ouvir:</span>
+      <label><input type="radio" name="dmr-listen" value="both" checked> TS1 e TS2</label>
+      <label><input type="radio" name="dmr-listen" value="ts1"> S&oacute; TS1</label>
+      <label><input type="radio" name="dmr-listen" value="ts2"> S&oacute; TS2</label>
+    </div>
+    <div class="dmr-slots">
+      <div class="dmr-slot">
+        <div class="slot-title">TIME-SLOT 1</div>
+        <div class="slot-row">Estado: <span class="slot-led" id="ts1Led"></span><span id="ts1State">inativo</span></div>
+        <div class="slot-row">Tipo: <span id="ts1Type">-</span></div>
+        <div class="slot-row">Origem: <span id="ts1Src">-</span></div>
+        <div class="slot-row">Destino: <span id="ts1Tgt">-</span></div>
+        <div class="slot-stats">Frames: <span id="ts1Frames">0 V / 0 D</span></div>
+      </div>
+      <div class="dmr-slot">
+        <div class="slot-title">TIME-SLOT 2</div>
+        <div class="slot-row">Estado: <span class="slot-led" id="ts2Led"></span><span id="ts2State">inativo</span></div>
+        <div class="slot-row">Tipo: <span id="ts2Type">-</span></div>
+        <div class="slot-row">Origem: <span id="ts2Src">-</span></div>
+        <div class="slot-row">Destino: <span id="ts2Tgt">-</span></div>
+        <div class="slot-stats">Frames: <span id="ts2Frames">0 V / 0 D</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="dmr-footer">
+    <button class="dmr-btn-normal" id="dmrBtnNormal">Normal</button>
+    <button class="dmr-btn-inverted" id="dmrBtnInverted">Invertido</button>
+  </div>
+  <div class="dmr-grip" id="dmrGrip">&#9698;</div>
 </div>
 
 <div id="toast"></div>
@@ -592,9 +693,11 @@ var BW_OPTS = {
   LSB: [1800,2400,2700,3000,3400],
   CW:  [200,500,1000],
   NFM: [8000,12000,16000,25000],
-  WFM: [180000,200000]
+  WFM: [180000,200000],
+  DMR: [12500]
 };
-var BW_DEF = {AM:6000,USB:2700,LSB:2700,CW:500,NFM:12000,WFM:180000};
+var BW_DEF = {AM:6000,USB:2700,LSB:2700,CW:500,NFM:12000,WFM:180000,DMR:12500};
+var dmrPolarity = false; // false=Normal, true=Invertido
 var STEPS = [10,50,100,500,1000,2500,5000,6250,9000,10000,12500,25000,50000,100000,200000,500000,1000000];
 var FMIN = 0, FMAX = 1766000000;
 
@@ -739,8 +842,8 @@ function setVfo(hz){
 // ===================== MODOS / BW / PASSO =====================
 function setMode(m, keepBw){
   S.mode = m;
-  if (!keepBw) S.bw = BW_DEF[m];
-  var stepDef = {USB:1000, LSB:1000, NFM:10000, WFM:200000};
+  if (!keepBw) S.bw = BW_DEF[m] || BW_DEF.NFM;
+  var stepDef = {USB:1000, LSB:1000, NFM:10000, WFM:200000, DMR:12500};
   if (!keepBw && stepDef[m]){
     S.step = stepDef[m];
     $("btnStep").textContent = "STEP " + fmtStep(S.step);
@@ -749,6 +852,9 @@ function setMode(m, keepBw){
   var bts = $("modes").querySelectorAll("button[data-m]");
   for (var i = 0; i < bts.length; i++)
     bts[i].className = (bts[i].dataset.m === m) ? "sel" : "";
+  // DMR button highlight
+  $("btnDmr").style.background = (m === "DMR") ? "#2e7d32" : "#0a2810";
+  $("btnDmr").style.boxShadow = (m === "DMR") ? "0 0 10px rgba(76,175,80,0.4)" : "none";
   $("btnBw").textContent = "BW " + fmtBw(S.bw);
   var a = A();
   if (a){ a.setMode(m); a.setBandwidth(S.bw); }
@@ -790,6 +896,10 @@ function openDd(anchor, items, current, up, cb){
 $("modes").addEventListener("click", function(ev){
   var m = ev.target.dataset && ev.target.dataset.m;
   if (m) setMode(m);
+});
+// DMR button handler
+$("btnDmr").addEventListener("click", function(){
+  DmrDecoder.open();
 });
 $("btnBw").addEventListener("click", function(ev){
   ev.stopPropagation();
@@ -1015,6 +1125,8 @@ function onDriverMissing(){
 }
 function onBackButton(){
   if (ddEl){ closeDd(); return; }
+  // Fechar DMR overlay primeiro
+  if ($("ovDmr").classList.contains("show")){ DmrDecoder.close(); return; }
   var ovs = document.querySelectorAll(".overlay.show");
   if (ovs.length){ ovs.forEach(function(o){ o.className = "overlay"; }); return; }
   $("ovExit").className = "overlay show";
@@ -1602,6 +1714,247 @@ $("drOk").addEventListener("click", function(){
   $("ovDriver").className = "overlay";
   var a = A(); if (a) a.openDriverStore();
 });
+
+// ===================== DMR DECODER =====================
+var DmrDecoder = (function(){
+  var _prevMode = "WFM";
+  var _prevBw = 180000;
+  var _prevStep = 100000;
+  var _active = false;
+  var _timeoutTimer = null;
+
+  var ts1 = { active:false, type:'-', src:'-', tgt:'-', vFrames:0, dFrames:0 };
+  var ts2 = { active:false, type:'-', src:'-', tgt:'-', vFrames:0, dFrames:0 };
+
+  function open(){
+    // Salva modo atual
+    _prevMode = S.mode;
+    _prevBw = S.bw;
+    _prevStep = S.step;
+
+    // Troca para NFM 12.5 kHz (frequencia DMR)
+    setMode("DMR");
+
+    // Reset slots
+    ts1 = { active:false, type:'-', src:'-', tgt:'-', vFrames:0, dFrames:0 };
+    ts2 = { active:false, type:'-', src:'-', tgt:'-', vFrames:0, dFrames:0 };
+    dmrPolarity = false;
+    _active = true;
+
+    updateSlotsUI();
+    updatePolarityUI();
+
+    // Abre o painel
+    $("ovDmr").className = "dmr-overlay show";
+
+    var a = A();
+    var listenOpts = document.getElementsByName("dmr-listen");
+    for (var i = 0; i < listenOpts.length; i++) {
+      listenOpts[i].checked = (listenOpts[i].value === "both");
+    }
+    if (a && a.setDmrListenMode) a.setDmrListenMode("both");
+    if (a && a.setDmrLogEnabled) a.setDmrLogEnabled(false);
+
+    toast("DMR ativado — NFM 12.5 kHz");
+  }
+
+  function close(){
+    _active = false;
+    $("ovDmr").className = "dmr-overlay";
+
+    // Restaura modo anterior
+    S.mode = _prevMode;
+    S.bw = _prevBw;
+    S.step = _prevStep;
+    setMode(_prevMode, true);
+    $("btnBw").textContent = "BW " + fmtBw(S.bw);
+    $("btnStep").textContent = "STEP " + fmtStep(S.step);
+    $("tuneLbl").textContent = "SINTONIA (STEP " + fmtStep(S.step) + ")";
+  }
+
+  function isActive(){ return _active; }
+
+  // Recebe atualizacoes de estado serializadas em JSON vindas do Kotlin (DmrManager)
+  function updateSlots(jsonStr){
+    if (!_active) return;
+    try {
+      var data = JSON.parse(jsonStr);
+
+      if (data.ts1) {
+        if (data.ts1.active) {
+          if (data.ts1.isVoice) ts1.vFrames++;
+          else ts1.dFrames++;
+        }
+        ts1.active = data.ts1.active;
+        ts1.type = data.ts1.type;
+        ts1.src = data.ts1.src;
+        ts1.tgt = data.ts1.tgt;
+      }
+      if (data.ts2) {
+        if (data.ts2.active) {
+          if (data.ts2.isVoice) ts2.vFrames++;
+          else ts2.dFrames++;
+        }
+        ts2.active = data.ts2.active;
+        ts2.type = data.ts2.type;
+        ts2.src = data.ts2.src;
+        ts2.tgt = data.ts2.tgt;
+      }
+      updateSlotsUI();
+    } catch(e) {}
+  }
+
+  function updateSlotsUI(){
+    // TS1
+    var led1 = $("ts1Led"); var st1 = $("ts1State");
+    if (ts1.active){
+      if (led1) led1.className = "slot-led on";
+      if (st1) st1.textContent = "ativo";
+    } else {
+      if (led1) led1.className = "slot-led";
+      if (st1) st1.textContent = "inativo";
+      ts1.type = '-'; ts1.src = '-'; ts1.tgt = '-';
+    }
+    var e = $("ts1Type"); if (e) e.textContent = ts1.type;
+    e = $("ts1Src"); if (e) e.textContent = ts1.src;
+    e = $("ts1Tgt"); if (e) e.textContent = ts1.tgt;
+    e = $("ts1Frames"); if (e) e.textContent = ts1.vFrames + ' V / ' + ts1.dFrames + ' D';
+
+    // TS2
+    var led2 = $("ts2Led"); var st2 = $("ts2State");
+    if (ts2.active){
+      if (led2) led2.className = "slot-led on";
+      if (st2) st2.textContent = "ativo";
+    } else {
+      if (led2) led2.className = "slot-led";
+      if (st2) st2.textContent = "inativo";
+      ts2.type = '-'; ts2.src = '-'; ts2.tgt = '-';
+    }
+    e = $("ts2Type"); if (e) e.textContent = ts2.type;
+    e = $("ts2Src"); if (e) e.textContent = ts2.src;
+    e = $("ts2Tgt"); if (e) e.textContent = ts2.tgt;
+    e = $("ts2Frames"); if (e) e.textContent = ts2.vFrames + ' V / ' + ts2.dFrames + ' D';
+
+    // Titulo
+    var title = $("dmrMainTitle");
+    if (title){
+      if (ts1.active && ts2.active) title.textContent = "Decodificador DMR \u2014 voz no TS1 e no TS2";
+      else if (ts1.active) title.textContent = "Decodificador DMR \u2014 voz no TS1";
+      else if (ts2.active) title.textContent = "Decodificador DMR \u2014 voz no TS2";
+      else title.textContent = "Decodificador DMR \u2014 pronto";
+    }
+
+    // Sinal
+    var sig = $("dmrSignal");
+    if (sig){
+      if (ts1.active || ts2.active){
+        sig.textContent = "DMR: sinal 4FSK detectado (BW 12.5 kHz, NFM)";
+        sig.style.color = "#4caf50";
+      } else {
+        sig.textContent = "DMR: aguardando sinal 4FSK @ 4800 baud (BW 12.5 kHz, NFM)";
+        sig.style.color = "#81c784";
+      }
+    }
+  }
+
+  function setPolarity(invert){
+    dmrPolarity = invert;
+    updatePolarityUI();
+    // Notifica o Android para reiniciar com polaridade diferente
+    var a = A(); if (a && a.setDmrPolarity) a.setDmrPolarity(invert);
+  }
+
+  function updatePolarityUI(){
+    var btnN = $("dmrBtnNormal");
+    var btnI = $("dmrBtnInverted");
+    if (btnN){
+      btnN.style.background = dmrPolarity ? "#051a0b" : "#2e7d32";
+      btnN.style.boxShadow = dmrPolarity ? "none" : "0 0 10px rgba(102,187,106,0.4)";
+      btnN.style.color = dmrPolarity ? "#40dd70" : "#fff";
+    }
+    if (btnI){
+      btnI.style.background = dmrPolarity ? "#2e7d32" : "#051a0b";
+      btnI.style.boxShadow = dmrPolarity ? "0 0 10px rgba(102,187,106,0.4)" : "none";
+      btnI.style.color = dmrPolarity ? "#fff" : "#40dd70";
+    }
+  }
+
+  return {
+    open: open,
+    close: close,
+    isActive: isActive,
+    updateSlots: updateSlots,
+    setPolarity: setPolarity
+  };
+})();
+
+// DMR panel event handlers
+$("dmrClose").addEventListener("click", function(){ DmrDecoder.close(); });
+$("dmrBtnNormal").addEventListener("click", function(){ DmrDecoder.setPolarity(false); });
+$("dmrBtnInverted").addEventListener("click", function(){ DmrDecoder.setPolarity(true); });
+
+document.querySelectorAll("input[name='dmr-listen']").forEach(function(el) {
+  el.addEventListener("change", function() {
+    var val = this.value;
+    var a = A(); if (a && a.setDmrListenMode) a.setDmrListenMode(val);
+  });
+});
+
+// Janela DMR flutuante: arrastar pela barra do titulo e redimensionar pelo canto
+(function(){
+  var win = $("ovDmr");
+  var bar = $("dmrDragBar");
+  var grip = $("dmrGrip");
+  if (!win || !bar || !grip) return;
+
+  bar.addEventListener("pointerdown", function(e){
+    if (e.target && e.target.id === "dmrClose") return;
+    var r = win.getBoundingClientRect();
+    var sx = e.clientX, sy = e.clientY, ox = r.left, oy = r.top, w = r.width;
+    function move(ev){
+      var nl = ox + (ev.clientX - sx);
+      var nt = oy + (ev.clientY - sy);
+      nl = Math.max(8 - w + 60, Math.min(nl, window.innerWidth - 60));
+      nt = Math.max(0, Math.min(nt, window.innerHeight - 44));
+      win.style.left = nl + "px";
+      win.style.top = nt + "px";
+      ev.preventDefault();
+    }
+    function up(){
+      bar.removeEventListener("pointermove", move);
+      bar.removeEventListener("pointerup", up);
+      bar.removeEventListener("pointercancel", up);
+    }
+    try { bar.setPointerCapture(e.pointerId); } catch(_e) {}
+    bar.addEventListener("pointermove", move);
+    bar.addEventListener("pointerup", up);
+    bar.addEventListener("pointercancel", up);
+    e.preventDefault();
+  });
+
+  grip.addEventListener("pointerdown", function(e){
+    var r = win.getBoundingClientRect();
+    var sx = e.clientX, sy = e.clientY, ow = r.width, oh = r.height;
+    win.style.maxHeight = "none";
+    function move(ev){
+      var w = Math.max(230, Math.min(ow + (ev.clientX - sx), window.innerWidth - r.left - 4));
+      var h = Math.max(170, Math.min(oh + (ev.clientY - sy), window.innerHeight - r.top - 4));
+      win.style.width = w + "px";
+      win.style.height = h + "px";
+      ev.preventDefault();
+    }
+    function up(){
+      grip.removeEventListener("pointermove", move);
+      grip.removeEventListener("pointerup", up);
+      grip.removeEventListener("pointercancel", up);
+    }
+    try { grip.setPointerCapture(e.pointerId); } catch(_e) {}
+    grip.addEventListener("pointermove", move);
+    grip.addEventListener("pointerup", up);
+    grip.addEventListener("pointercancel", up);
+    e.preventDefault();
+  });
+})();
 
 // ===================== INICIALIZACAO =====================
 function init(){
