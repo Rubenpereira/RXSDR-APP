@@ -24,8 +24,23 @@ class DspEngine(private val ui: Ui) {
 
     companion object {
         const val AUDIO_RATE = 32000
-        const val FFT_SIZE = 4096
-        const val SPEC_BINS = 2048
+        val VALID_FFT_SIZES = intArrayOf(1024, 2048, 4096, 8192, 16384, 32768)
+    }
+
+    // ----- resolucao da cachoeira/espectro (tamanho da FFT) -----
+    @Volatile var fftSize: Int = 4096
+        private set
+    @Volatile var specBins: Int = 2048
+        private set
+    @Volatile private var fftDirty = true
+
+    /** Chamado pela UI (dropdown "Resolucao"); a reconstrucao acontece na thread DSP. */
+    fun setFftSize(n: Int) {
+        val size = if (VALID_FFT_SIZES.contains(n)) n else 4096
+        if (size == fftSize) return
+        fftSize = size
+        specBins = size / 2
+        fftDirty = true
     }
 
     // ----- parametros controlados pela UI -----
@@ -39,6 +54,26 @@ class DspEngine(private val ui: Ui) {
     @Volatile var sampleRate: Int = 1_024_000
     @Volatile var fftFps: Int = 15
     @Volatile private var dirty = true
+
+    // ----- tonalidade (TON): grave <-> agudo, -100..100, 0 = neutro -----
+    // Filtro de 1 polo separa o audio em grave (passa-baixa ~1kHz) e agudo
+    // (o restante); cada lado ganha um ganho conforme o slider.
+    private val toneAlpha = (1f - Math.exp(-2.0 * PI * 1000.0 / AUDIO_RATE)).toFloat()
+    private var toneLp = 0f
+    @Volatile private var toneBassGain = 1f
+    @Volatile private var toneTrebleGain = 1f
+
+    fun setTone(v: Float) {
+        val t = (v / 100f).coerceIn(-1f, 1f)
+        if (t >= 0f) {
+            toneBassGain = 1f - 0.6f * t
+            toneTrebleGain = 1f + 1.2f * t
+        } else {
+            val g = -t
+            toneBassGain = 1f + 1.2f * g
+            toneTrebleGain = 1f - 0.6f * g
+        }
+    }
 
     // ----- medidores lidos pela UI -----
     @Volatile var smeterDbm: Float = -130f
@@ -68,12 +103,16 @@ class DspEngine(private val ui: Ui) {
     private var audioBuf = FloatArray(1024)
     private var fmWork = FloatArray(4096)
 
-    private val fft = Fft(FFT_SIZE)
-    private val fftRe = FloatArray(FFT_SIZE)
-    private val fftIm = FloatArray(FFT_SIZE)
-    private val window = FloatArray(FFT_SIZE)
-    private val specU8 = ByteArray(SPEC_BINS)
-    private val specDb = FloatArray(SPEC_BINS)
+    private var fft = Fft(fftSize)
+    private var fftRe = FloatArray(fftSize)
+    private var fftIm = FloatArray(fftSize)
+    private var window = FloatArray(fftSize)
+    private var specU8 = ByteArray(specBins)
+    private var specDb = FloatArray(specBins)
+    // historico deslizante: guarda sempre as ultimas fftSize amostras, mesmo
+    // quando um bloco de rede (16384 amostras) e menor que a resolucao escolhida.
+    private var fftHistI = FloatArray(fftSize)
+    private var fftHistQ = FloatArray(fftSize)
     private var specInit = false
     private var fftDbOffset = 0f
     private var lastFftMs = 0L
@@ -102,8 +141,22 @@ class DspEngine(private val ui: Ui) {
     private var sqOpen = true
 
     init {
+        rebuildFft()
+    }
+
+    /** (Re)cria FFT, janela e buffers de espectro para o fftSize/specBins atuais.
+     *  So deve ser chamada pela thread DSP (via process()), nunca direto da UI. */
+    private fun rebuildFft() {
+        fft = Fft(fftSize)
+        fftRe = FloatArray(fftSize)
+        fftIm = FloatArray(fftSize)
+        window = FloatArray(fftSize)
+        specU8 = ByteArray(specBins)
+        specDb = FloatArray(specBins)
+        fftHistI = FloatArray(fftSize)
+        fftHistQ = FloatArray(fftSize)
         // janela Blackman-Harris de 4 termos
-        val n = FFT_SIZE
+        val n = fftSize
         var coherentGain = 0.0
         for (i in 0 until n) {
             val a = 2.0 * PI * i / (n - 1)
@@ -113,6 +166,9 @@ class DspEngine(private val ui: Ui) {
         }
         // normalizacao: seno em escala cheia -> 0 dBFS
         fftDbOffset = (-20.0 * log10(coherentGain / 2.0)).toFloat()
+        specInit = false
+        lastFftMs = 0L
+        fftDirty = false
     }
 
     fun start() {
@@ -200,6 +256,7 @@ class DspEngine(private val ui: Ui) {
 
     private fun process(blk: ByteArray, lenBytes: Int) {
         if (dirty) rebuild()
+        if (fftDirty) rebuildFft()
         val n = lenBytes / 2
         if (iBuf.size < n) { iBuf = FloatArray(n); qBuf = FloatArray(n) }
         // u8 -> float e remocao de DC (passa-alta lenta)
@@ -227,21 +284,33 @@ class DspEngine(private val ui: Ui) {
         }
 
         // ----- espectro -----
+        // Atualiza o historico deslizante (ultimas fftSize amostras) ANTES do teste de
+        // intervalo, para que ele fique sempre em dia mesmo quando o bloco de rede
+        // (tipicamente 16384 amostras) e menor que a resolucao escolhida (ate 32768).
+        if (n >= fftSize) {
+            System.arraycopy(iBuf, n - fftSize, fftHistI, 0, fftSize)
+            System.arraycopy(qBuf, n - fftSize, fftHistQ, 0, fftSize)
+        } else {
+            val keep = fftSize - n
+            System.arraycopy(fftHistI, n, fftHistI, 0, keep)
+            System.arraycopy(fftHistQ, n, fftHistQ, 0, keep)
+            System.arraycopy(iBuf, 0, fftHistI, keep, n)
+            System.arraycopy(qBuf, 0, fftHistQ, keep, n)
+        }
         val now = System.currentTimeMillis()
         val interval = 1000L / fftFps.coerceIn(5, 30)
-        if (now - lastFftMs >= interval && n >= FFT_SIZE) {
+        if (now - lastFftMs >= interval) {
             lastFftMs = now
-            val off = n - FFT_SIZE
-            for (k in 0 until FFT_SIZE) {
-                fftRe[k] = iBuf[off + k] * window[k]
-                fftIm[k] = qBuf[off + k] * window[k]
+            for (k in 0 until fftSize) {
+                fftRe[k] = fftHistI[k] * window[k]
+                fftIm[k] = fftHistQ[k] * window[k]
             }
             fft.transform(fftRe, fftIm)
-            val half = FFT_SIZE / 2
-            for (b in 0 until SPEC_BINS) {
-                // fftshift + reducao 4096 -> 2048 pegando o maior dos pares
-                val src = (b * 2 + half) and (FFT_SIZE - 1)
-                val src2 = (src + 1) and (FFT_SIZE - 1)
+            val half = fftSize / 2
+            for (b in 0 until specBins) {
+                // fftshift + reducao fftSize -> specBins (metade) pegando o maior dos pares
+                val src = (b * 2 + half) and (fftSize - 1)
+                val src2 = (src + 1) and (fftSize - 1)
                 val p1 = fftRe[src] * fftRe[src] + fftIm[src] * fftIm[src]
                 val p2 = fftRe[src2] * fftRe[src2] + fftIm[src2] * fftIm[src2]
                 val p = if (p1 > p2) p1 else p2
@@ -372,6 +441,19 @@ class DspEngine(private val ui: Ui) {
         if (!isWfm && nrLevel > 0.01f) {
             nr.level = nrLevel
             nr.process(audioBuf, audioN)
+        }
+
+        // ----- tonalidade (grave/agudo) -----
+        if (toneBassGain != 1f || toneTrebleGain != 1f) {
+            var lp = toneLp
+            val bg = toneBassGain; val tg = toneTrebleGain
+            for (k in 0 until audioN) {
+                val x = audioBuf[k]
+                lp += toneAlpha * (x - lp)
+                val hi = x - lp
+                audioBuf[k] = lp * bg + hi * tg
+            }
+            toneLp = lp
         }
 
         // ----- squelch -----

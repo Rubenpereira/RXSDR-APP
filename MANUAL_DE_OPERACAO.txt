@@ -118,8 +118,15 @@ Botoes (moldura laranja):
   slider, o AGC desliga e vale o valor manual.
 - PISO WF: nivel minimo de cor da cachoeira (contraste).
   123 e um bom ponto de partida.
+- PALETA: ganho/intensidade das cores da cachoeira (x0.5 a
+  x5.0, padrao x2.0). Quanto maior, mais rapido o sinal passa
+  de ciano/verde para laranja e vermelho conforme fica mais
+  forte.
 - SQUELCH: silencia o audio abaixo do nivel escolhido (dBm).
   Todo a esquerda = OFF (sempre aberto).
+- TON: tonalidade do audio - arraste para a esquerda para um
+  som mais grave, para a direita para mais agudo. No centro
+  (0) o audio fica neutro, sem alteracao.
 
 11. CONFIGURACAO (ENGRENAGEM)
 -----------------------------
@@ -129,6 +136,13 @@ Botoes (moldura laranja):
 - Calibracao S-meter: desloca a leitura em dB para casar com
   um sinal de referencia conhecido.
 - FFT quadros/s: fluidez do espectro (10/15/20).
+- Resolucao: tamanho da FFT usada no espectro/cachoeira (1024
+  a 32768 pontos). Valores maiores mostram mais detalhe/linhas
+  mais finas de frequencia, porem exigem mais processamento
+  do aparelho.
+- Modo de Tela: Celular (vertical) ou TV/Projetor (horizontal)
+  - reorganiza os paineis para a orientacao escolhida. Tambem
+  pode ser trocado pelo atalho na tela inicial ao ligar o app.
 - Driver USB: instala o "RTL-SDR driver" da Play Store.
 Frequencias abaixo de 24 MHz ativam automaticamente a
 amostragem direta (ramo Q) - requer dongle v3 ou modificado.

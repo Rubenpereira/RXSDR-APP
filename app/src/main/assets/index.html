@@ -248,7 +248,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     <button data-m="CW">CW</button>
     <button data-m="NFM">NFM</button>
     <button data-m="WFM" class="sel">WFM</button>
-    <button id="btnDmr" style="background:#0a2810;border:1px solid #2e7d32;color:#4caf50;font-weight:bold">DMR</button>
+    <button id="btnDmr" data-m="DMR">DMR</button>
     <button class="pill" id="btnBw">BW 180k</button>
     <button class="pill" id="btnStep">STEP 100k</button>
   </div>
@@ -320,9 +320,19 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     <span class="v" id="vWfC">123</span>
   </div>
   <div class="cr">
+    <span class="n">PALETA</span>
+    <input type="range" id="rWfG" min="5" max="50" value="20">
+    <span class="v" id="vWfG">x2.0</span>
+  </div>
+  <div class="cr">
     <span class="n">SQUELCH</span>
     <input type="range" id="rSq" min="-150" max="-20" value="-150">
     <span class="v" id="vSq">OFF</span>
+  </div>
+  <div class="cr">
+    <span class="n">TON</span>
+    <input type="range" id="rTon" min="-100" max="100" value="0">
+    <span class="v" id="vTon">0</span>
   </div>
 </div>
 
@@ -344,6 +354,16 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     <div class="cr"><span class="n">Calibra&ccedil;&atilde;o S-meter</span><input type="number" id="cCal" value="-30" min="-90" max="30" style="width:80px"> dB</div>
     <div class="cr"><span class="n">FFT quadros/s</span>
       <select id="cFps"><option>10</option><option selected>15</option><option>20</option></select>
+    </div>
+    <div class="cr"><span class="n">Resolu&ccedil;&atilde;o</span>
+      <select id="cFft">
+        <option value="1024">1024</option>
+        <option value="2048">2048</option>
+        <option value="4096" selected>4096</option>
+        <option value="8192">8192</option>
+        <option value="16384">16384</option>
+        <option value="32768">32768</option>
+      </select>
     </div>
     <div class="cr"><span class="n">Modo Direct Sampling</span>
       <select id="cDirect">
@@ -557,8 +577,15 @@ Botoes (moldura laranja):
   slider, o AGC desliga e vale o valor manual.
 - PISO WF: nivel minimo de cor da cachoeira (contraste).
   123 e um bom ponto de partida.
+- PALETA: ganho/intensidade das cores da cachoeira (x0.5 a
+  x5.0, padrao x2.0). Quanto maior, mais rapido o sinal passa
+  de ciano/verde para laranja e vermelho conforme fica mais
+  forte.
 - SQUELCH: silencia o audio abaixo do nivel escolhido (dBm).
   Todo a esquerda = OFF (sempre aberto).
+- TON: tonalidade do audio - arraste para a esquerda para um
+  som mais grave, para a direita para mais agudo. No centro
+  (0) o audio fica neutro, sem alteracao.
 
 11. CONFIGURACAO (ENGRENAGEM)
 -----------------------------
@@ -568,6 +595,13 @@ Botoes (moldura laranja):
 - Calibracao S-meter: desloca a leitura em dB para casar com
   um sinal de referencia conhecido.
 - FFT quadros/s: fluidez do espectro (10/15/20).
+- Resolucao: tamanho da FFT usada no espectro/cachoeira (1024
+  a 32768 pontos). Valores maiores mostram mais detalhe/linhas
+  mais finas de frequencia, porem exigem mais processamento
+  do aparelho.
+- Modo de Tela: Celular (vertical) ou TV/Projetor (horizontal)
+  - reorganiza os paineis para a orientacao escolhida. Tambem
+  pode ser trocado pelo atalho na tela inicial ao ligar o app.
 - Driver USB: instala o &quot;RTL-SDR driver&quot; da Play Store.
 Frequencias abaixo de 24 MHz ativam automaticamente a
 amostragem direta (ramo Q) - requer dongle v3 ou modificado.
@@ -677,9 +711,11 @@ var S = {
   center: 93950000, rate: 1024000,
   zoom: 1, dispRange: 60, dispTop: -20,
   wfSpeed: 2, avg: false,
-  vol: 180, sq: -150, gain: 326, agc: false,
+  vol: 180, sq: -150, ton: 0, gain: 326, agc: false,
   cal: -30, ppm: 0, fps: 15,
   wfContrast: 123, // 0..255 (representa o offset)
+  wfGain: 20, // 5..50 (representa x0.5..x5.0, intensidade/ganho das cores da cachoeira)
+  fftSize: 4096, // resolucao da FFT/cachoeira: 1024,2048,4096,8192,16384,32768
   nr: 40, // reducao de ruido 0..100
   directMode: "AUTO", // "AUTO", "ON", "OFF"
   src: "TCP", addr: "192.168.1.10:1234",
@@ -708,9 +744,9 @@ function saveCfg(){
   try{
     localStorage.setItem("rxsdrapp2", JSON.stringify({
       vfo:S.vfo, vfoB:S.vfoB, modeB:S.modeB, mode:S.mode, bw:S.bw, step:S.step,
-      zoom:S.zoom, wfSpeed:S.wfSpeed, vol:S.vol, sq:S.sq,
+      zoom:S.zoom, wfSpeed:S.wfSpeed, vol:S.vol, sq:S.sq, ton:S.ton,
       gain:S.gain, agc:S.agc, cal:S.cal, ppm:S.ppm, fps:S.fps,
-      wfContrast:S.wfContrast, directMode:S.directMode, nr:S.nr, defv14:true, defv18:true,
+      wfContrast:S.wfContrast, wfGain:S.wfGain, fftSize:S.fftSize, directMode:S.directMode, nr:S.nr, defv14:true, defv18:true,
       activeName:S.activeName, keepScreen:S.keepScreen, defv19:true, mnFont:S.mnFont,
       src:S.src, addr:S.addr, rate:S.rate, avg:S.avg,
       layoutMode:S.layoutMode
@@ -834,6 +870,10 @@ function renderFreq(){
 function setVfo(hz){
   hz = Math.max(FMIN, Math.min(FMAX, Math.round(hz)));
   S.vfo = hz;
+  // Fora de um arrasto (digitar frequencia, botoes de passo, bandas, etc.),
+  // a janela sempre recentraliza no VFO, como antes. Durante o arrasto, quem
+  // controla S.viewCenter e o dragTune() (so empurra quando bate na borda).
+  if (!vfoDragActive) S.viewCenter = hz;
   renderFreq();
   var a = A(); if (a) a.setVfo(String(hz));
   saveCfg();
@@ -852,9 +892,6 @@ function setMode(m, keepBw){
   var bts = $("modes").querySelectorAll("button[data-m]");
   for (var i = 0; i < bts.length; i++)
     bts[i].className = (bts[i].dataset.m === m) ? "sel" : "";
-  // DMR button highlight
-  $("btnDmr").style.background = (m === "DMR") ? "#2e7d32" : "#0a2810";
-  $("btnDmr").style.boxShadow = (m === "DMR") ? "0 0 10px rgba(76,175,80,0.4)" : "none";
   $("btnBw").textContent = "BW " + fmtBw(S.bw);
   var a = A();
   if (a){ a.setMode(m); a.setBandwidth(S.bw); }
@@ -988,6 +1025,12 @@ $("rSq").addEventListener("input", function(){
   var a = A(); if (a) a.setSquelch(S.sq);
   saveCfg();
 });
+$("rTon").addEventListener("input", function(){
+  S.ton = parseInt(this.value);
+  $("vTon").textContent = (S.ton === 0) ? "0" : (S.ton > 0 ? ("+" + S.ton) : String(S.ton));
+  var a = A(); if (a) a.setTone(S.ton);
+  saveCfg();
+});
 $("rGain").addEventListener("input", function(){
   S.gain = parseInt(this.value);
   S.agc = false;
@@ -1005,6 +1048,11 @@ $("rNr").addEventListener("input", function(){
 $("rWfC").addEventListener("input", function(){
   S.wfContrast = parseInt(this.value);
   $("vWfC").textContent = S.wfContrast;
+  saveCfg();
+});
+$("rWfG").addEventListener("input", function(){
+  S.wfGain = parseInt(this.value);
+  $("vWfG").textContent = "x" + (S.wfGain/10).toFixed(1);
   saveCfg();
 });
 $("bAgc").addEventListener("click", function(){
@@ -1033,9 +1081,11 @@ function pushAllSettings(){
   a.setBandwidth(S.bw);
   a.setVolume(Math.pow(S.vol/100, 2));
   a.setSquelch(S.sq);
+  a.setTone(S.ton);
   a.setCal(S.cal);
   a.setPpm(S.ppm);
   a.setFftFps(S.fps);
+  a.setFftSize(S.fftSize);
   a.setSampleRate(S.rate);
   a.setDirectMode(S.directMode);
   a.setNr(S.nr/100);
@@ -1210,12 +1260,33 @@ function viewWindow(){
   if (S.zoom === 1){
     lo = S.center - S.rate/2; hi = S.center + S.rate/2;
   } else {
-    lo = S.vfo - span/2; hi = S.vfo + span/2;
+    // Com zoom, a janela fica "grudada" em S.viewCenter (nao segue o VFO direto);
+    // ela so se desloca quando o VFO chega na borda (ver dragTune/setVfo).
+    if (S.viewCenter == null) S.viewCenter = S.vfo;
+    lo = S.viewCenter - span/2; hi = S.viewCenter + span/2;
     var min = S.center - S.rate/2, max = S.center + S.rate/2;
-    if (lo < min){ lo = min; hi = min + span; }
-    if (hi > max){ hi = max; lo = max - span; }
+    if (lo < min){ lo = min; hi = min + span; S.viewCenter = lo + span/2; }
+    if (hi > max){ hi = max; lo = max - span; S.viewCenter = lo + span/2; }
   }
   return {lo:lo, hi:hi, span:span};
+}
+// Durante o arrasto na cachoeira/espectro: a barra do VFO acompanha o dedo 1:1;
+// so quando ela chega na borda da janela visivel e que o espectro (viewCenter)
+// e o VFO sao empurrados juntos, mantendo a barra encostada na borda.
+var vfoDragActive = false;
+function dragTune(f0, dx, hzPerPx){
+  var newVfo = f0 + dx * hzPerPx;
+  if (S.zoom !== 1){
+    var half = (S.rate / S.zoom) / 2;
+    if (S.viewCenter == null) S.viewCenter = f0;
+    var lo = S.viewCenter - half, hi = S.viewCenter + half;
+    if (newVfo < lo) S.viewCenter -= (lo - newVfo);
+    else if (newVfo > hi) S.viewCenter += (newVfo - hi);
+    var minC = S.center - S.rate/2 + half, maxC = S.center + S.rate/2 - half;
+    if (S.viewCenter < minC) S.viewCenter = minC;
+    if (S.viewCenter > maxC) S.viewCenter = maxC;
+  }
+  return newVfo;
 }
 function niceStep(span, target){
   var raw = span / target;
@@ -1309,30 +1380,48 @@ function drawPan(){
 // ===================== WATERFALL =====================
 var wfLut = [];
 (function(){
+  // Fundo da cachoeira (piso de ruido): Preto -> Azul Brilhante (mantido como antes)
+  // Sinais (acima do piso), estilo OpenWebRX: Ciano (fraco) -> Verde -> Amarelo ->
+  // Laranja -> Vermelho -> Vermelho escuro (sinal forte/local), intensificando aos poucos.
+  var signalStops = [
+    [0.00,   0, 180, 190], // sinal fraco: ciano
+    [0.20,   0, 210, 120], // verde-azulado
+    [0.40, 140, 220,   0], // verde-amarelado
+    [0.55, 255, 215,   0], // amarelo (sinal medio)
+    [0.70, 255, 140,   0], // laranja
+    [0.85, 230,  50,   0], // vermelho
+    [1.00, 120,   0,   0]  // vermelho escuro: sinal forte/local
+  ];
+  function signalColor(u){
+    for (var s = 0; s < signalStops.length - 1; s++){
+      var a = signalStops[s], b2 = signalStops[s + 1];
+      if (u <= b2[0]){
+        var span = b2[0] - a[0];
+        var k = span > 0 ? (u - a[0]) / span : 0;
+        return [
+          a[1] + (b2[1] - a[1]) * k,
+          a[2] + (b2[2] - a[2]) * k,
+          a[3] + (b2[3] - a[3]) * k
+        ];
+      }
+    }
+    var last = signalStops[signalStops.length - 1];
+    return [last[1], last[2], last[3]];
+  }
   for (var i = 0; i < 256; i++){
     var t = i / 255;
     var r, g, b;
-    // Paleta azul profissional: Preto -> Azul Profundo -> Azul Claro -> Verde -> Amarelo -> Vermelho
     if (t < 0.5){
-        // 0.0 a 0.5: Preto a Azul Brilhante (Metade da escala e azul)
+        // 0.0 a 0.5: Preto a Azul Brilhante (piso de ruido / fundo da cachoeira)
         r = 0;
         g = Math.round(t * 2 * 100);
         b = Math.round(t * 2 * 255);
     }
-    else if (t < 0.75){
-        // 0.5 a 0.75: Azul a Verde
-        var u = (t - 0.5) / 0.25;
-        r = 0; g = Math.round(100 + u * 155); b = Math.round(255 * (1 - u));
-    }
-    else if (t < 0.92){
-        // 0.75 a 0.92: Verde a Amarelo
-        var u2 = (t - 0.75) / 0.17;
-        r = Math.round(u2 * 255); g = 255; b = 0;
-    }
     else {
-        // 0.92 a 1.0: Amarelo a Vermelho/Branco
-        var u3 = (t - 0.92) / 0.08;
-        r = 255; g = Math.round(255 * (1 - u3)); b = Math.round(u3 * 100);
+        // 0.5 a 1.0: sinais - intensidade crescente ate vermelho escuro
+        var u = (t - 0.5) / 0.5;
+        var c = signalColor(u);
+        r = Math.round(c[0]); g = Math.round(c[1]); b = Math.round(c[2]);
     }
     r = Math.max(0, Math.min(255, r));
     g = Math.max(0, Math.min(255, g));
@@ -1359,8 +1448,8 @@ function drawWf(){
     var b = Math.floor((f - f0) / binHz);
     var val = (b >= 0 && b < spec.length) ? spec[b] : 0;
     // PISO WF agora subtrai diretamente do sinal.
-    // Multiplicador de ganho (2.0) para esticar a escala de cores.
-    var idx = Math.round((val - S.wfContrast) * 2.0);
+    // PALETA (S.wfGain/10) e o multiplicador de ganho para esticar a escala de cores.
+    var idx = Math.round((val - S.wfContrast) * (S.wfGain / 10));
     idx = Math.max(0, Math.min(255, idx));
     var c = wfLut[idx];
     var i4 = x * 4;
@@ -1375,10 +1464,12 @@ pan.addEventListener("touchstart", function(ev){
   ev.preventDefault();
   if (ev.touches.length === 1){
     panTouch.active = true;
+    vfoDragActive = true;
     panTouch.x0 = ev.touches[0].clientX;
     panTouch.f0 = S.vfo;
   } else if (ev.touches.length === 2){
     panTouch.active = false;
+    vfoDragActive = false;
     panTouch.pinch0 = Math.abs(ev.touches[0].clientX - ev.touches[1].clientX);
     panTouch.zoom0 = S.zoom;
   }
@@ -1389,7 +1480,8 @@ pan.addEventListener("touchmove", function(ev){
   if (ev.touches.length === 1 && panTouch.active){
     var dx = ev.touches[0].clientX - panTouch.x0;
     var hzPerPx = v.span / pan.clientWidth;
-    var f = panTouch.f0 + dx * hzPerPx;
+    // A barra do VFO acompanha o dedo; o espectro so e empurrado quando ela bate na borda.
+    var f = dragTune(panTouch.f0, dx, hzPerPx);
     setVfo(Math.round(f / S.step) * S.step);
   } else if (ev.touches.length === 2){
     var d = Math.abs(ev.touches[0].clientX - ev.touches[1].clientX);
@@ -1401,11 +1493,12 @@ pan.addEventListener("touchmove", function(ev){
     }
   }
 }, {passive:false});
-pan.addEventListener("touchend", function(){ panTouch.active = false; saveCfg(); });
+pan.addEventListener("touchend", function(){ panTouch.active = false; vfoDragActive = false; saveCfg(); });
 
 // Mouse events para o espectro (arrastar sintoniza)
 pan.addEventListener("mousedown", function(ev){
   panTouch.active = true;
+  vfoDragActive = true;
   panTouch.x0 = ev.clientX;
   panTouch.f0 = S.vfo;
 });
@@ -1414,12 +1507,13 @@ window.addEventListener("mousemove", function(ev){
   var v = viewWindow();
   var dx = ev.clientX - panTouch.x0;
   var hzPerPx = v.span / pan.clientWidth;
-  var f = panTouch.f0 + dx * hzPerPx;
+  var f = dragTune(panTouch.f0, dx, hzPerPx);
   setVfo(Math.round(f / S.step) * S.step);
 });
 window.addEventListener("mouseup", function(){
   if (panTouch.active) {
     panTouch.active = false;
+    vfoDragActive = false;
     saveCfg();
   }
 });
@@ -1428,6 +1522,7 @@ var wfTouch = {active:false, x0:0, f0:0, moved:false};
 wf.addEventListener("touchstart", function(ev){
   ev.preventDefault();
   wfTouch.active = true;
+  vfoDragActive = true;
   wfTouch.moved = false;
   wfTouch.x0 = ev.touches[0].clientX;
   wfTouch.f0 = S.vfo;
@@ -1440,12 +1535,13 @@ wf.addEventListener("touchmove", function(ev){
   if (Math.abs(dx) > 5) wfTouch.moved = true;
   var v = viewWindow();
   var hzPerPx = v.span / wf.clientWidth;
-  var f = wfTouch.f0 + dx * hzPerPx;
+  var f = dragTune(wfTouch.f0, dx, hzPerPx);
   setVfo(Math.round(f / S.step) * S.step);
 }, {passive:false});
 
 wf.addEventListener("touchend", function(ev){
   if (!wfTouch.active) return;
+  vfoDragActive = false;
   if (!wfTouch.moved){
     var v = viewWindow();
     var rect = wf.getBoundingClientRect();
@@ -1459,6 +1555,7 @@ wf.addEventListener("touchend", function(ev){
 // Mouse events para a cachoeira (arrastar corre frequência, clique sintoniza)
 wf.addEventListener("mousedown", function(ev){
   wfTouch.active = true;
+  vfoDragActive = true;
   wfTouch.moved = false;
   wfTouch.x0 = ev.clientX;
   wfTouch.f0 = S.vfo;
@@ -1469,11 +1566,12 @@ window.addEventListener("mousemove", function(ev){
   if (Math.abs(dx) > 5) wfTouch.moved = true;
   var v = viewWindow();
   var hzPerPx = v.span / wf.clientWidth;
-  var f = wfTouch.f0 + dx * hzPerPx;
+  var f = dragTune(wfTouch.f0, dx, hzPerPx);
   setVfo(Math.round(f / S.step) * S.step);
 });
 window.addEventListener("mouseup", function(ev){
   if (!wfTouch.active) return;
+  vfoDragActive = false;
   if (!wfTouch.moved){
     var v = viewWindow();
     var rect = wf.getBoundingClientRect();
@@ -1676,6 +1774,7 @@ $("btnCfg").addEventListener("click", function(){
   $("cPpm").value = S.ppm;
   $("cCal").value = S.cal;
   $("cFps").value = String(S.fps);
+  $("cFft").value = String(S.fftSize);
   $("cDirect").value = S.directMode;
   $("cLayout").value = S.layoutMode || "MOBILE";
   $("ovCfg").className = "overlay show";
@@ -1686,12 +1785,14 @@ $("cClose").addEventListener("click", function(){
   var ppm = parseInt($("cPpm").value) || 0;
   var cal = parseFloat($("cCal").value);
   var fps = parseInt($("cFps").value);
+  var fftSize = parseInt($("cFft").value);
   var direct = $("cDirect").value;
   var layout = $("cLayout").value;
   if (rate !== S.rate){ S.rate = rate; if (a) a.setSampleRate(rate); }
   if (ppm !== S.ppm){ S.ppm = ppm; if (a) a.setPpm(ppm); }
   if (!isNaN(cal) && cal !== S.cal){ S.cal = cal; if (a) a.setCal(cal); }
   if (fps !== S.fps){ S.fps = fps; if (a) a.setFftFps(fps); }
+  if (fftSize !== S.fftSize){ S.fftSize = fftSize; if (a) a.setFftSize(fftSize); }
   if (direct !== S.directMode){
       S.directMode = direct;
       if (a) a.setDirectMode(direct);
@@ -1974,9 +2075,11 @@ function init(){
   $("tuneLbl").textContent = "SINTONIA (STEP " + fmtStep(S.step) + ")";
   $("rVol").value = S.vol; $("vVol").textContent = S.vol + "%";
   $("rSq").value = S.sq; $("vSq").textContent = (S.sq <= -150) ? "OFF" : (S.sq + "dB");
+  $("rTon").value = S.ton; $("vTon").textContent = (S.ton === 0) ? "0" : (S.ton > 0 ? ("+" + S.ton) : String(S.ton));
   $("rGain").value = S.gain; $("vGain").textContent = (S.gain/10).toFixed(1) + "dB";
   $("bAgc").className = "tgl" + (S.agc ? " sel" : "");
   $("rWfC").value = S.wfContrast; $("vWfC").textContent = S.wfContrast;
+  $("rWfG").value = S.wfGain; $("vWfG").textContent = "x" + (S.wfGain/10).toFixed(1);
   $("rNr").value = S.nr; $("vNr").textContent = S.nr === 0 ? "OFF" : (S.nr + "%");
   $("bZoom").textContent = "ZOOM x" + S.zoom;
   if (WF_SPEEDS.indexOf(S.wfSpeed) < 0) S.wfSpeed = 2;

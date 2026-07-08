@@ -380,6 +380,16 @@ class MainActivity : Activity() {
         }
 
         @JavascriptInterface
+        fun setTone(v: Double) {
+            engine.setTone(v.toFloat())
+        }
+
+        @JavascriptInterface
+        fun setFftSize(n: Int) {
+            engine.setFftSize(n)
+        }
+
+        @JavascriptInterface
         fun setVolume(v: Double) {
             engine.volume = v.toFloat()
         }
