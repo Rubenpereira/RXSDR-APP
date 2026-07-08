@@ -111,9 +111,11 @@ body.tv-layout #rightPane {
 #vfob b{color:#9fb8cc;font-weight:normal}
 .modes{display:flex;gap:5px;flex-wrap:wrap}
 .modes button,.pill{background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--txt);font-family:inherit;font-size:12px;padding:6px 10px}
+.modes button{border-color:#ff8c1a}
 .modes button.sel{border-color:var(--grn);color:var(--grn);font-weight:bold}
 .pill{color:var(--acc)}
 .pill.org{border-color:#ff8c1a}
+.pill.yel{border-color:#ffd400}
 .vfolbl{color:var(--dim)}
 .vfolbl.on{color:var(--grn);font-weight:bold;text-shadow:0 0 6px rgba(46,204,113,.5)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 10px}
@@ -249,8 +251,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     <button data-m="NFM">NFM</button>
     <button data-m="WFM" class="sel">WFM</button>
     <button id="btnDmr" data-m="DMR">DMR</button>
-    <button class="pill" id="btnBw">BW 180k</button>
-    <button class="pill" id="btnStep">STEP 100k</button>
+    <button class="pill yel" id="btnBw">BW 180k</button>
+    <button class="pill yel" id="btnStep">STEP 100k</button>
   </div>
 </div>
 
@@ -294,6 +296,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
   <button id="bWf">WF x1</button>
   <button id="bAvg">MEDIA</button>
   <button id="bKeep">TELA ATIVA</button>
+  <button id="bLock" style="position:relative;z-index:501">&#128275; LOCK</button>
   <button id="bManual">MANUAL</button>
 </div>
 
@@ -559,6 +562,11 @@ Botoes (moldura laranja):
   Solto = a tela apaga no tempo normal do Android e o RADIO
   CONTINUA TOCANDO em segundo plano (aparece uma notificacao
   &quot;RXSDR-APP - Recebendo&quot;).
+- LOCK: trava todo o radio (modos, sliders, sintonia, arrastar
+  na cachoeira/espectro, configuracao, DMR etc.) para nao mudar
+  nada por engano - util para limpar a tela, guardar no bolso
+  ou deixar criancas mexerem sem alterar a sintonia. Fica verde
+  e escrito TRAVADO; toque de novo para destravar.
 - MANUAL: abre este manual. Para aumentar a letra, use os
   botoes A- / A+ ou faca o gesto de PINCA com dois dedos.
 
@@ -701,6 +709,10 @@ na otimizacao de bateria do aparelho.
 </div>
 
 <div id="toast"></div>
+
+<!-- Bloqueia toda a interacao do radio quando travado; o botao LOCK fica
+     acima dela (z-index maior) para continuar clicavel e destravar. -->
+<div id="lockOverlay" style="display:none;position:fixed;inset:0;z-index:500;background:transparent"></div>
 
 <script>
 "use strict";
@@ -1660,6 +1672,16 @@ $("bKeep").addEventListener("click", function(){
   this.className = S.keepScreen ? "sel" : "";
   var a = A(); if (a) a.setKeepScreen(S.keepScreen);
   saveCfg();
+});
+
+// ===================== LOCK (trava todo o radio) =====================
+var radioLocked = false;
+$("bLock").addEventListener("click", function(){
+  radioLocked = !radioLocked;
+  $("lockOverlay").style.display = radioLocked ? "block" : "none";
+  this.className = radioLocked ? "sel" : "";
+  this.innerHTML = radioLocked ? "&#128274; TRAVADO" : "&#128275; LOCK";
+  toast(radioLocked ? "Radio travado" : "Radio destravado", 1200);
 });
 
 // ===================== S-METER ANALOGICO (mostrador Yaesu) =====================

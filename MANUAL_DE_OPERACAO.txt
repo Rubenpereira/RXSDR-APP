@@ -100,6 +100,11 @@ Botoes (moldura laranja):
   Solto = a tela apaga no tempo normal do Android e o RADIO
   CONTINUA TOCANDO em segundo plano (aparece uma notificacao
   "RXSDR-APP - Recebendo").
+- LOCK: trava todo o radio (modos, sliders, sintonia, arrastar
+  na cachoeira/espectro, configuracao, DMR etc.) para nao mudar
+  nada por engano - util para limpar a tela, guardar no bolso
+  ou deixar criancas mexerem sem alterar a sintonia. Fica verde
+  e escrito TRAVADO; toque de novo para destravar.
 - MANUAL: abre este manual. Para aumentar a letra, use os
   botoes A- / A+ ou faca o gesto de PINCA com dois dedos.
 
